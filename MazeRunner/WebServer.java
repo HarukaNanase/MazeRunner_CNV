@@ -17,6 +17,7 @@ import java.util.UUID;
 public class WebServer {
 
     private static String CURRENT_PATH;
+    private static String SOLUTIONS_PATH = "solutions/";
     public static void main(String[] args) throws Exception {
         Path currentRelativePath = Paths.get("");
         CURRENT_PATH = currentRelativePath.toAbsolutePath().toString();
@@ -37,7 +38,7 @@ public class WebServer {
         }
     }
 
-    public static byte[] SolveMaze(String args){
+    static byte[] SolveMaze(String args){
         try{
             String[] final_args = GetQueryValues(args);
             System.out.println("Solving maze...");
@@ -45,24 +46,28 @@ public class WebServer {
             StringBuilder sb = new StringBuilder();
             String path = CURRENT_PATH + "/" + final_args[7];
             return Files.readAllBytes(Paths.get(path));
-
         }catch(Exception e){
             return "Something went terribly wrong.".getBytes();
         }
     }
 
-    public static String[] GetQueryValues(String args){
+    static String[] GetQueryValues(String args){
         String[] args_array = args.split("&");
         ArrayList<String> list = new ArrayList<String>(Arrays.asList(args_array));
         list.add(list.get(0));
         list.remove(0);
-        String fileName = "solutions/"+UUID.randomUUID().toString();
-        for(int i = 0; i < list.size(); i++){
-            String s = list.get(i);
-            list.set(i,s.substring(s.lastIndexOf("=")+1));
-        }
-        list.add(fileName);
+        for(int i = 0; i < list.size(); i++)
+            list.set(i,GetKeyValue(list.get(i)));
+        list.add(GenerateRandomFileName());
         return list.toArray(new String[list.size()]);
+    }
+
+    static String GenerateRandomFileName(){
+        return SOLUTIONS_PATH + UUID.randomUUID().toString();
+    }
+
+    static String GetKeyValue(String key_value){
+        return key_value.substring(key_value.lastIndexOf("=")+1);
     }
 
 
