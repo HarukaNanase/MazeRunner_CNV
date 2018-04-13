@@ -8,5 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="aws-java-sdk-1.11.313" level="project" />
+    <orderEntry type="library" name="aws-java-sdk-third-party" level="project" />
   </component>
 </module>

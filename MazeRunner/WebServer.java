@@ -12,12 +12,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class WebServer {
 
     private static String CURRENT_PATH;
     private static String SOLUTIONS_PATH = "solutions/";
+    private static HashMap<Integer, String> thread_requests = new HashMap<>();
+
     public static void main(String[] args) throws Exception {
         Path currentRelativePath = Paths.get("");
         CURRENT_PATH = currentRelativePath.toAbsolutePath().toString();
@@ -43,7 +46,6 @@ public class WebServer {
             String[] final_args = GetQueryValues(args);
             System.out.println("Solving maze...");
             Main.main(final_args);
-            StringBuilder sb = new StringBuilder();
             String path = CURRENT_PATH + "/" + final_args[7];
             return Files.readAllBytes(Paths.get(path));
         }catch(Exception e){

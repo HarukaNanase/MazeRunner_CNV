@@ -11,6 +11,9 @@ public class TestMetrics {
     private static Date EndTime = null;
     private static PrintStream out = null;
     private static int bb_count = 0;
+    private static int instr_count = 0;
+    private static String maze_arguments = null;
+
     public static void main(String[] argv){
 
             String infilename = argv[0];
@@ -20,12 +23,15 @@ public class TestMetrics {
 
                     for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                         Routine routine = (Routine) e.nextElement();
+                        bb_count += routine.getBasicBlockCount();
+                        instr_count += routine.getInstructionCount();
                         if(routine.getMethodName().equals("SolveMaze")) {
                             routine.addBefore("TestMetrics", "StartTimer", new Integer(1));
                             routine.addAfter("TestMetrics", "EndTimer", new Integer(1));
                         }
-                        else
-                            continue;
+                        if(routine.getMethodName().equals("GetQueryValues")){
+                           // routine.addAfter("TestMetrics", "GetMazeArguments", );
+                        }
 
                         for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                             BasicBlock bb = (BasicBlock) b.nextElement();
@@ -33,7 +39,7 @@ public class TestMetrics {
                         }
                     }
                     ci.addAfter("TestMetrics", "PrintInfo", ci.getClassName());
-                    ci.write(argv[1] + System.getProperty("file.separator") + infilename);
+                    ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\")+1));
                 }
 
     }
@@ -54,7 +60,12 @@ public class TestMetrics {
     }
 
     public static synchronized void PrintInfo(String in){
-        System.out.println("BasicBlocks found: " + bb_count);
+        System.out.println("BBL found: " + bb_count);
+        bb_count = 0;
     }
+
+
+
+
 
 }
