@@ -1,6 +1,5 @@
 import BIT.highBIT.*;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.Enumeration;
@@ -12,6 +11,7 @@ public class TestMetrics {
     private static PrintStream out = null;
     private static int bb_count = 0;
     private static int instr_count = 0;
+    private static int method_count = 0;
     private static String maze_arguments = null;
 
     public static void main(String[] argv){
@@ -23,16 +23,7 @@ public class TestMetrics {
 
                     for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                         Routine routine = (Routine) e.nextElement();
-                        bb_count += routine.getBasicBlockCount();
-                        instr_count += routine.getInstructionCount();
-                        if(routine.getMethodName().equals("SolveMaze")) {
-                            routine.addBefore("TestMetrics", "StartTimer", new Integer(1));
-                            routine.addAfter("TestMetrics", "EndTimer", new Integer(1));
-                        }
-                        if(routine.getMethodName().equals("GetQueryValues")){
-                           // routine.addAfter("TestMetrics", "GetMazeArguments", );
-                        }
-
+                        routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
                         for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                             BasicBlock bb = (BasicBlock) b.nextElement();
                             bb.addBefore("TestMetrics", "BBCount", new Integer(bb.size()));
@@ -56,13 +47,30 @@ public class TestMetrics {
     }
 
     public static synchronized void BBCount(int bb_size){
-        bb_count++;
+        bb_count += bb_size;
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setBasicBlocksFound(bb_count);
+        //System.out.println(metricsThread.getThreadId());
     }
 
-    public static synchronized void PrintInfo(String in){
-        System.out.println("BBL found: " + bb_count);
-        bb_count = 0;
+    public static synchronized void INSTRCount(int instr_size) {
+        instr_count += instr_size;
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setInstructionsRun(instr_count);
+
     }
+
+    public static synchronized void METHODCount(int meth_size){
+        method_count += meth_size;
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setMethodsCount(method_count);
+    }
+
+
+    public static synchronized void PrintInfo(String in){
+        WebServer.PrintHashMap();
+    }
+
 
 
 
