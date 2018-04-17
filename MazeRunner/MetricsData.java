@@ -1,6 +1,14 @@
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
+
+
+@DynamoDBTable(tableName="metrics")
 public class MetricsData {
     private long threadId = 0;
+    private String UUID = null;
+    private String requestQuery = null;
     private int instructionsRun = 0;
     private int basicBlocksFound = 0;
     private int methodsCount = 0;
@@ -14,6 +22,21 @@ public class MetricsData {
         this.threadId = threadId;
     }
 
+    public MetricsData(long threadId, String requestQuery){
+        this.threadId = threadId;
+        this.requestQuery = requestQuery;
+    }
+
+    @DynamoDBHashKey(attributeName = "UUID")
+    public String getUUID() {
+        return UUID;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
+    }
+
+    @DynamoDBAttribute(attributeName="instructionsRun")
     public int getInstructionsRun() {
         return instructionsRun;
     }
@@ -22,6 +45,7 @@ public class MetricsData {
         this.instructionsRun = instructionsRun;
     }
 
+    @DynamoDBAttribute(attributeName="bb_found")
     public int getBasicBlocksFound() {
         return basicBlocksFound;
     }
@@ -30,6 +54,7 @@ public class MetricsData {
         this.basicBlocksFound = basicBlocksFound;
     }
 
+    @DynamoDBAttribute(attributeName="methodsCount")
     public int getMethodsCount() {
         return methodsCount;
     }
@@ -38,6 +63,7 @@ public class MetricsData {
         this.methodsCount = methodsCount;
     }
 
+    @DynamoDBAttribute(attributeName="memoryCalls")
     public int getMemoryCalls() {
         return memoryCalls;
     }
@@ -46,6 +72,7 @@ public class MetricsData {
         this.memoryCalls = memoryCalls;
     }
 
+    @DynamoDBAttribute(attributeName="threadId")
     public long getThreadId() {
         return threadId;
     }
@@ -54,7 +81,14 @@ public class MetricsData {
         this.threadId = threadId;
     }
 
+    @DynamoDBAttribute(attributeName="requestQuery")
+    public String getRequestQuery() {
+        return requestQuery;
+    }
 
+    public void setRequestQuery(String requestQuery) {
+        this.requestQuery = requestQuery;
+    }
 
 
 

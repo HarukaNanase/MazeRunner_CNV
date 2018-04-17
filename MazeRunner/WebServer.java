@@ -22,14 +22,16 @@ public class WebServer {
         CURRENT_PATH = currentRelativePath.toAbsolutePath().toString();
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/mzrun.html", new MazeHandler());
-        server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool()); // creates a default executor
+        server.setExecutor(java.util.concurrent.Executors.newSingleThreadExecutor()); // creates a default executor
+        DynamoController.init();
+        System.out.println("WebServer: Ready to receive mazes.");
         server.start();
     }
 
     static class MazeHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            thread_requests.put(Thread.currentThread().getId(), new MetricsData(Thread.currentThread().getId()));
+            thread_requests.put(Thread.currentThread().getId(), new MetricsData(Thread.currentThread().getId(), t.getRequestURI().getQuery()));
             byte[] response = SolveMaze(t.getRequestURI().getQuery());
             t.sendResponseHeaders(200, response.length);
             OutputStream os = t.getResponseBody();
@@ -44,8 +46,10 @@ public class WebServer {
         try{
             String[] final_args = GetQueryValues(args);
             System.out.println("Solving maze...");
-            Main.main(final_args);
             String path = CURRENT_PATH + "/" + final_args[7];
+            thread_requests.get(Thread.currentThread().getId()).setUUID(final_args[7].substring(final_args[7].lastIndexOf("/")+1));
+            Main.main(final_args);
+
             return Files.readAllBytes(Paths.get(path));
         }catch(Exception e){
             return "Something went terribly wrong.".getBytes();
@@ -69,18 +73,6 @@ public class WebServer {
 
     static String GetKeyValue(String key_value){
         return key_value.substring(key_value.lastIndexOf("=")+1);
-    }
-
-    static void PrintHashMap(){
-        System.out.println("Threads run: " + thread_requests.size());
-        for(Map.Entry<Long, MetricsData> entry : thread_requests.entrySet()) {
-            System.out.println("Thread " + entry.getKey() + " Metrics Data:");
-            System.out.println("Instructions Run: " + entry.getValue().getInstructionsRun());
-            System.out.println("BasicBlocks Found: " + entry.getValue().getBasicBlocksFound());
-            System.out.println("Methods Count: " + entry.getValue().getMethodsCount());
-            System.out.println("Memory Calls: " + entry.getValue().getMemoryCalls());
-
-        }
     }
 
     static HashMap<Long, MetricsData> getHashMap(){
