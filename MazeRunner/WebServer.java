@@ -52,7 +52,7 @@ public class WebServer {
 
             return Files.readAllBytes(Paths.get(path));
         }catch(Exception e){
-            return "Something went terribly wrong.".getBytes();
+            return e.getMessage().getBytes();
         }
     }
 

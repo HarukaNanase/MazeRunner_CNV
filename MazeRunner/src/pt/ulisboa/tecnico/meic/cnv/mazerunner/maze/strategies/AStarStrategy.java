@@ -12,7 +12,7 @@ import pt.ulisboa.tecnico.meic.cnv.mazerunner.maze.exceptions.InvalidCoordinates
 import pt.ulisboa.tecnico.meic.cnv.mazerunner.maze.strategies.datastructure.Coordinate;
 
 public class AStarStrategy extends MazeRunningStrategy {
-	
+	private int numberOfRuns = 0;
 	private class Node {
 		
 		private Coordinate coordinate;

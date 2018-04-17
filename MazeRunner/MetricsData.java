@@ -13,6 +13,7 @@ public class MetricsData {
     private int basicBlocksFound = 0;
     private int methodsCount = 0;
     private int memoryCalls = 0;
+    private int loopRuns = 0;
 
     public MetricsData(){
 
@@ -90,7 +91,14 @@ public class MetricsData {
         this.requestQuery = requestQuery;
     }
 
+    @DynamoDBAttribute(attributeName="loopRuns")
+    public int getLoopRuns() {
+        return loopRuns;
+    }
 
+    public void setLoopRuns(int loopRuns) {
+        this.loopRuns = loopRuns;
+    }
 
 
 }
