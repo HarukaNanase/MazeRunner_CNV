@@ -24,9 +24,9 @@ public class TestMetrics {
             String infilename = argv[0];
             infilename += ".class";
                 if (infilename.endsWith(".class")) {
-                    if(infilename.equals("Main.class")) {
+                    String classname = infilename.substring(infilename.lastIndexOf("\\")+1);
+                    if(classname.equals("Main.class")) {
                         ClassInfo ci = new ClassInfo(infilename);
-
                         for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                             Routine routine = (Routine) e.nextElement();
                             routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
@@ -48,17 +48,24 @@ public class TestMetrics {
                         ci.addAfter("TestMetrics", "PrintInfo", ci.getClassName());
                         ci.addAfter("TestMetrics", "ResetMetricsData", ci.getClassName());
                         ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
-                    }else if(infilename.substring(infilename.lastIndexOf("\\")+1).equals("AStarStrategy.class")){
+                    }else if(classname.equals("AStarStrategy.class")){
                         ClassInfo ci = new ClassInfo(infilename);
                         for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
                             Routine routine = (Routine) e.nextElement();
-                            if(routine.getMethodName().equals("run")){
+                            if(routine.getMethodName().equals("run")) {
+                                for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
+                                    BasicBlock bb = (BasicBlock) b.nextElement();
+                                    if (bb.getMethodName().equals("run")) {
+                                        bb.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                    }
+                                }
+                            }
                                 //for(Instruction instruction : routine.getInstructions()){
                                     //if(instruction.getOpcode() == InstructionTable.if_icmpne)
-                                        routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                //        routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
                                 //}
-                            }
-                        }
+
+                        };
 
                         ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
                     }

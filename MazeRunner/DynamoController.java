@@ -39,9 +39,9 @@ public class DynamoController {
                 .build();
         try {
             Table table = new Table(dynamoDB, TABLE_NAME);
-            DeleteTableResult del = table.delete();
-            System.out.println("DynamoController: Waiting to delete already existing table.");
-            table.waitForDelete();
+            //DeleteTableResult del = table.delete();
+           //System.out.println("DynamoController: Waiting to delete already existing table.");
+            //table.waitForDelete();
         }catch(ResourceNotFoundException rnfe){
 
             System.out.println("DynamoController: Table not found... Creating it now!");

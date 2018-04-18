@@ -73,7 +73,8 @@ public class AStarStrategy extends MazeRunningStrategy {
 	@Override
 	public void run(Maze maze, int xStart, int yStart, int xFinal, int yFinal, int velocity) throws InvalidCoordinatesException {
 		final Node finalNode = new Node(xFinal, yFinal, 0, 0, 0);
-		
+
+		int NumberOfRuns = 0;
 		Queue<Node> openList = new PriorityQueue<Node>(1,new NodeComparator());
 		HashMap<Coordinate,Node> openMap = new HashMap<Coordinate, Node>();		
 		
@@ -85,6 +86,7 @@ public class AStarStrategy extends MazeRunningStrategy {
 		openMap.put(initialNode.coordinate, initialNode);
 		
 		while(!openList.isEmpty()) {
+			NumberOfRuns++;
 			Node examiningNode = openList.remove();
 			openMap.remove(examiningNode.coordinate);
 			
@@ -96,6 +98,7 @@ public class AStarStrategy extends MazeRunningStrategy {
 				
 				if(neighboor.getX() == xFinal && neighboor.getY() == yFinal) {
 					maze.setPos(neighboor.getX(), neighboor.getY(), Maze.VISITED_CHAR);
+					System.out.println("AStarStrategy: Runs Done: " + NumberOfRuns);
 					return;
 				}
 				
