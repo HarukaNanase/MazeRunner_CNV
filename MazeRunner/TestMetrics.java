@@ -3,6 +3,10 @@ import BIT.highBIT.*;
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.Enumeration;
+
+import BIT.lowBIT.CONSTANT_Methodref_Info;
+import BIT.lowBIT.CONSTANT_NameAndType_Info;
+import BIT.lowBIT.CONSTANT_Utf8_Info;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -19,58 +23,89 @@ public class TestMetrics {
     private static int method_count = 0;
     private static String maze_arguments = null;
     private static DynamoDBMapper mapper = null;
-    public static void main(String[] argv){
+    public static void main(String[] argv) {
 
-            String infilename = argv[0];
-            infilename += ".class";
-                if (infilename.endsWith(".class")) {
-                    String classname = infilename.substring(infilename.lastIndexOf("\\")+1);
-                    if(classname.equals("Main.class")) {
-                        ClassInfo ci = new ClassInfo(infilename);
-                        for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
-                            Routine routine = (Routine) e.nextElement();
-                            routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
-                            for (Instruction instruction : routine.getInstructions()) {
-                                int opcode = instruction.getOpcode();
-                                if ((opcode == InstructionTable.NEW) ||
-                                        (opcode == InstructionTable.newarray) ||
-                                        (opcode == InstructionTable.anewarray) ||
-                                        (opcode == InstructionTable.multianewarray)) {
-                                    instruction.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
-                                }
-                            }
-
-                            for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
-                                BasicBlock bb = (BasicBlock) b.nextElement();
-                                bb.addBefore("TestMetrics", "BBCount", new Integer(bb.size()));
-                            }
+        String infilename = argv[0];
+        infilename += ".class";
+        if (infilename.endsWith(".class")) {
+            String classname = infilename.substring(infilename.lastIndexOf("\\") + 1);
+            ClassInfo ci = new ClassInfo(infilename);
+            if (classname.equals("Main.class")) {
+                for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
+                    Routine routine = (Routine) e.nextElement();
+                    routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
+                    for (Instruction instruction : routine.getInstructions()) {
+                        int opcode = instruction.getOpcode();
+                        if ((opcode == InstructionTable.NEW) ||
+                                (opcode == InstructionTable.newarray) ||
+                                (opcode == InstructionTable.anewarray) ||
+                                (opcode == InstructionTable.multianewarray)) {
+                            instruction.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
                         }
-                        ci.addAfter("TestMetrics", "PrintInfo", ci.getClassName());
-                        ci.addAfter("TestMetrics", "ResetMetricsData", ci.getClassName());
-                        ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
-                    }else if(classname.equals("AStarStrategy.class")){
-                        ClassInfo ci = new ClassInfo(infilename);
-                        for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
-                            Routine routine = (Routine) e.nextElement();
-                            if(routine.getMethodName().equals("run")) {
-                                for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
-                                    BasicBlock bb = (BasicBlock) b.nextElement();
-                                    if (bb.getMethodName().equals("run")) {
-                                        bb.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
-                                    }
-                                }
-                            }
-                                //for(Instruction instruction : routine.getInstructions()){
-                                    //if(instruction.getOpcode() == InstructionTable.if_icmpne)
-                                //        routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
-                                //}
+                    }
 
-                        };
-
-                        ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
+                    for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
+                        BasicBlock bb = (BasicBlock) b.nextElement();
+                        bb.addBefore("TestMetrics", "BBCount", new Integer(bb.size()));
                     }
                 }
+                ci.addAfter("TestMetrics", "PrintInfo", ci.getClassName());
+                ci.addAfter("TestMetrics", "ResetMetricsData", ci.getClassName());
+            } else if (classname.equals("AStarStrategy.class")) {
+                InjectIntoStrategy(ci);
+            }
 
+            else if (classname.equals("BreadthFirstSearchStrategy.class")) {
+                InjectIntoStrategy(ci);
+            }else if(classname.equals("DepthFirstSearchStrategy.class")){
+                InjectIntoStrategy(ci);
+            }
+
+            ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
+        }
+    }
+
+
+
+    private static void InjectIntoStrategy(ClassInfo ci){
+        for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
+            Routine routine = (Routine) e.nextElement();
+            if (routine.getMethodName().equals("run")) {
+                routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
+                for (Instruction instr : routine.getInstructions()) {
+                    int opcode = instr.getOpcode();
+                    if (instr.getOpcode() == InstructionTable.invokestatic) {
+                        if (routine.getConstantPool()[instr.getOperandValue()] instanceof CONSTANT_Methodref_Info) {
+                            short nameTypeIndex = ((CONSTANT_Methodref_Info) routine.getConstantPool()[instr.getOperandValue()]).name_and_type_index;
+                            CONSTANT_NameAndType_Info nameTypeInfo = (CONSTANT_NameAndType_Info) routine.getConstantPool()[nameTypeIndex];
+                            short nameIndex = nameTypeInfo.name_index;
+                            if (routine.getConstantPool()[nameIndex] instanceof CONSTANT_Utf8_Info) {
+                                byte[] name = ((CONSTANT_Utf8_Info) routine.getConstantPool()[nameIndex]).bytes;
+                                try {
+                                    String s = new String(name, "UTF-8");
+                                    if (s.equals("observe")) {
+                                        System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                    }
+                                    if(s.equals("solveAux")){
+                                        System.out.println("Found solveAux Index: " + instr.getOperandValue());
+                                        instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                    }
+
+                                } catch (Exception b) {
+                                    b.getMessage();
+                                }
+                            }
+                        }
+                    } else if ((opcode == InstructionTable.NEW) ||
+                            (opcode == InstructionTable.newarray) ||
+                            (opcode == InstructionTable.anewarray) ||
+                            (opcode == InstructionTable.multianewarray)) {
+                        instr.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
+                    }
+                }
+            }
+        }
     }
 
 

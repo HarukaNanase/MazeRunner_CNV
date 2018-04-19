@@ -21,3 +21,5 @@ public abstract class MazeRunningStrategy {
 			throws InvalidCoordinatesException ;
 	
 }
+
+

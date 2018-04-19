@@ -22,7 +22,7 @@ public class WebServer {
         CURRENT_PATH = currentRelativePath.toAbsolutePath().toString();
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/mzrun.html", new MazeHandler());
-        server.setExecutor(java.util.concurrent.Executors.newSingleThreadExecutor()); // creates a default executor
+        server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool()); // creates a default executor
         DynamoController.init();
         System.out.println("WebServer: Ready to receive mazes.");
         server.start();
@@ -37,8 +37,6 @@ public class WebServer {
             OutputStream os = t.getResponseBody();
             os.write(response);
             os.close();
-
-            //PrintHashMap();
         }
     }
 

@@ -74,7 +74,7 @@ public class Main {
 		MazeRunningStrategy strategy = FactoryMazeRunningStrategies.CreateMazeRunningStrategy(args[5]);
 		String mazeFile = args[6];
 		String mazeSolvedFile = args[7];
-    Maze maze = null;
+    	Maze maze = null;
 
         // Read the maze from the file
         try {
@@ -97,7 +97,7 @@ public class Main {
 
         // Choose the way to render the maze and rendered it
         RenderMaze renderMaze = new RenderMazeHTMLClientCanvas();
-			String mazeRendered = renderMaze.render(maze, velocity);
+		String mazeRendered = renderMaze.render(maze, velocity);
 
         // Write the maze solved to the output mazeOutputFile
         List<String> lines = Arrays.asList(mazeRendered);

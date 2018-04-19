@@ -27,10 +27,14 @@ public class DepthFirstSearchStrategy extends MazeRunningStrategy {
         	solved = true;
         }
         
-        if ((y+1 < maze.getHeight()) && !maze.isWall(x,y+1)) solveAux(maze, x, y + 1,xFinal,yFinal, velocity);
-        if ((x+1 < maze.getWidth()) && !maze.isWall(x+1,y)) solveAux(maze, x + 1, y,xFinal,yFinal, velocity);
-        if ((y-1 >= 0) && !maze.isWall(x,y-1)) solveAux(maze, x, y - 1,xFinal,yFinal, velocity);
-        if ((x-1 >= 0) && !maze.isWall(x-1,y)) solveAux(maze, x - 1, y,xFinal,yFinal, velocity);
+        if ((y+1 < maze.getHeight()) && !maze.isWall(x,y+1))
+            solveAux(maze, x, y + 1,xFinal,yFinal, velocity);
+        if ((x+1 < maze.getWidth()) && !maze.isWall(x+1,y))
+            solveAux(maze, x + 1, y,xFinal,yFinal, velocity);
+        if ((y-1 >= 0) && !maze.isWall(x,y-1))
+            solveAux(maze, x, y - 1,xFinal,yFinal, velocity);
+        if ((x-1 >= 0) && !maze.isWall(x-1,y))
+            solveAux(maze, x - 1, y,xFinal,yFinal, velocity);
 
         if (solved) return;
         
