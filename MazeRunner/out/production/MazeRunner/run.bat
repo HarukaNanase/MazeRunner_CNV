@@ -5,7 +5,7 @@ javac -cp aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\li
 javac -cp BIT/;;..\..\..\src\;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\ ..\..\..\TestMetrics.java -d .
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy.java -d .
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\BreadthFirstSearchStrategy.java -d .
-
+javac -cp javac -cp ..\..\..\;..\..\..\src\;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* ..\..\..\WebServer.java -d .
 
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Main output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy output/

@@ -7,7 +7,7 @@ import pt.ulisboa.tecnico.meic.cnv.mazerunner.maze.exceptions.InvalidCoordinates
 public class DepthFirstSearchStrategy extends MazeRunningStrategy {
 
 	private boolean solved = false;
-	
+
 	@Override
 	public void run(Maze maze, int xStart, int yStart, int xFinal, int yFinal, int velocity) throws InvalidCoordinatesException  {
 		solveAux(maze, xStart, yStart, xFinal, yFinal, velocity);

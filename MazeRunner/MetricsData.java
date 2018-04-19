@@ -100,5 +100,4 @@ public class MetricsData {
         this.loopRuns = loopRuns;
     }
 
-
 }

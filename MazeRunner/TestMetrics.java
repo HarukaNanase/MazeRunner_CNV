@@ -24,7 +24,6 @@ public class TestMetrics {
     private static String maze_arguments = null;
     private static DynamoDBMapper mapper = null;
     public static void main(String[] argv) {
-
         String infilename = argv[0];
         infilename += ".class";
         if (infilename.endsWith(".class")) {
@@ -33,7 +32,9 @@ public class TestMetrics {
             if (classname.equals("Main.class")) {
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                     Routine routine = (Routine) e.nextElement();
-                    routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
+                    InjectDynamicMETHODCount(routine);
+                    InjectDynamicINSTCount(routine);
+
                     for (Instruction instruction : routine.getInstructions()) {
                         int opcode = instruction.getOpcode();
                         if ((opcode == InstructionTable.NEW) ||
@@ -43,14 +44,7 @@ public class TestMetrics {
                             instruction.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
                         }
                     }
-
-                    for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
-                        BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore("TestMetrics", "BBCount", new Integer(bb.size()));
-                    }
                 }
-                ci.addAfter("TestMetrics", "PrintInfo", ci.getClassName());
-                ci.addAfter("TestMetrics", "ResetMetricsData", ci.getClassName());
             } else if (classname.equals("AStarStrategy.class")) {
                 InjectIntoStrategy(ci);
             }
@@ -67,11 +61,34 @@ public class TestMetrics {
 
 
 
+    static synchronized void InjectDynamicINSTCount(Routine routine){
+        for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
+            BasicBlock bb = (BasicBlock) b.nextElement();
+            bb.addBefore("TestMetrics", "dynINSTCount", new Integer(bb.size()));
+        }
+    }
+
+    public static synchronized void dynINSTCount(int instr_count){
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setInstructionsRun(metricsThread.getInstructionsRun()+instr_count);
+        metricsThread.setBasicBlocksFound(metricsThread.getBasicBlocksFound()+1);
+    }
+
+    public static synchronized void dynMETHCount(int meth_size){
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setMethodsCount(metricsThread.getMethodsCount()+meth_size);
+    }
+
+    static synchronized void InjectDynamicMETHODCount(Routine routine){
+        routine.addBefore("TestMetrics", "dynMETHCount", new Integer(1));
+    }
     private static void InjectIntoStrategy(ClassInfo ci){
         for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
             Routine routine = (Routine) e.nextElement();
+            InjectDynamicMETHODCount(routine);
+            InjectDynamicINSTCount(routine);
             if (routine.getMethodName().equals("run")) {
-                routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
+                //routine.addBefore("TestMetrics", "INSTRCount", new Integer(routine.getInstructionCount()));
                 for (Instruction instr : routine.getInstructions()) {
                     int opcode = instr.getOpcode();
                     if (instr.getOpcode() == InstructionTable.invokestatic) {
@@ -87,10 +104,6 @@ public class TestMetrics {
                                         System.out.println("Found Observe Index: " + instr.getOperandValue());
                                         instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
                                     }
-                                    if(s.equals("solveAux")){
-                                        System.out.println("Found solveAux Index: " + instr.getOperandValue());
-                                        instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
-                                    }
 
                                 } catch (Exception b) {
                                     b.getMessage();
@@ -104,6 +117,9 @@ public class TestMetrics {
                         instr.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
                     }
                 }
+            }else if(routine.getMethodName().equals("solveAux") &&
+                    ci.getClassName().substring(ci.getClassName().lastIndexOf("/")+1).equals("DepthFirstSearchStrategy")){
+                    routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
             }
         }
     }
@@ -145,48 +161,6 @@ public class TestMetrics {
         MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
         metricsThread.setLoopRuns(metricsThread.getLoopRuns() + loop_add);
     }
-
-    public static synchronized void PrintInfo(String in){
-        try{
-            DynamoController.init();
-            MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-            if(mapper == null)
-                mapper = new DynamoDBMapper(DynamoController.dynamoDB);
-            mapper.save(metricsThread);
-        }catch(Exception e){
-            System.out.println(e.getMessage());
-        }
-
-        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-        System.out.println("Thread " + metricsThread.getThreadId() + " Metrics Data:");
-        System.out.println("Request for this thread: " + metricsThread.getRequestQuery());
-        System.out.println("Instructions Run: " + metricsThread.getInstructionsRun());
-        System.out.println("BasicBlocks Found: " + metricsThread.getBasicBlocksFound());
-        System.out.println("Methods Count: " + metricsThread.getMethodsCount());
-        System.out.println("Memory Calls: " + metricsThread.getMemoryCalls());
-        System.out.println("Strategy Runs: " + metricsThread.getLoopRuns());
-    }
-
-    public static synchronized void ResetMetricsData(String in){
-        //save to dynamo
-        MetricsData metrics = WebServer.getHashMap().get(Thread.currentThread().getId());
-
-        System.out.println("TestMetrics: Total instructions run: " + metrics.getInstructionsRun());
-        metrics.setBasicBlocksFound(0);
-        metrics.setInstructionsRun(0);
-        metrics.setMemoryCalls(0);
-        metrics.setMethodsCount(0);
-        metrics.setLoopRuns(0);
-        WebServer.getHashMap().remove(Thread.currentThread().getId());
-        bb_count = 0;
-        method_count = 0;
-        instr_count = 0;
-
-    }
-
-
-
-
 
 
 }
