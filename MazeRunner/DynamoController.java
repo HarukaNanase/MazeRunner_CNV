@@ -38,7 +38,7 @@ public class DynamoController {
                 .withRegion(REGION)
                 .build();
         try {
-            Table table = new Table(dynamoDB, TABLE_NAME);
+            //Table table = new Table(dynamoDB, TABLE_NAME);
             //DeleteTableResult del = table.delete();
             //System.out.println("DynamoController: Waiting to delete already existing table.");
             //table.waitForDelete();

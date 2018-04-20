@@ -9,11 +9,14 @@ public class MetricsData {
     private long threadId = 0;
     private String UUID = null;
     private String requestQuery = null;
-    private int instructionsRun = 0;
-    private int basicBlocksFound = 0;
+    private long instructionsRun = 0;
+    private long basicBlocksFound = 0;
     private int methodsCount = 0;
     private int memoryCalls = 0;
     private int loopRuns = 0;
+
+    private long observeBB = 0;
+    private float percetangeObserve = 0;
 
     public MetricsData(){
 
@@ -38,20 +41,20 @@ public class MetricsData {
     }
 
     @DynamoDBAttribute(attributeName="instructionsRun")
-    public int getInstructionsRun() {
+    public long getInstructionsRun() {
         return instructionsRun;
     }
 
-    public void setInstructionsRun(int instructionsRun) {
+    public void setInstructionsRun(long instructionsRun) {
         this.instructionsRun = instructionsRun;
     }
 
     @DynamoDBAttribute(attributeName="bb_found")
-    public int getBasicBlocksFound() {
+    public long getBasicBlocksFound() {
         return basicBlocksFound;
     }
 
-    public void setBasicBlocksFound(int basicBlocksFound) {
+    public void setBasicBlocksFound(long basicBlocksFound) {
         this.basicBlocksFound = basicBlocksFound;
     }
 
@@ -100,4 +103,32 @@ public class MetricsData {
         this.loopRuns = loopRuns;
     }
 
+    @DynamoDBAttribute(attributeName="avgInstrPerBB")
+    public float getAverageInstructionsPerBB(){
+        return (float) this.getInstructionsRun()/this.getBasicBlocksFound();
+    }
+
+    @DynamoDBAttribute(attributeName="avgInstrPerStrategyRun")
+    public float getAverageInstructionsPerLoop(){
+        return (float) this.getInstructionsRun() / this.getLoopRuns();
+    }
+
+
+    @DynamoDBAttribute(attributeName = "ObserveBBs")
+    public long getObserveBB() {
+        return observeBB;
+    }
+
+    public void setObserveBB(long observeBB) {
+        this.observeBB = observeBB;
+    }
+
+    @DynamoDBAttribute(attributeName = "ObserveBBPercentage")
+    public float getPercetangeObserve() {
+        return (float) observeBB / this.basicBlocksFound;
+    }
+
+    public void setPercetangeObserve(float percetangeObserve) {
+        this.percetangeObserve = percetangeObserve;
+    }
 }

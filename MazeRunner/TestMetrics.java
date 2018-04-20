@@ -34,16 +34,7 @@ public class TestMetrics {
                     Routine routine = (Routine) e.nextElement();
                     InjectDynamicMETHODCount(routine);
                     InjectDynamicINSTCount(routine);
-
-                    for (Instruction instruction : routine.getInstructions()) {
-                        int opcode = instruction.getOpcode();
-                        if ((opcode == InstructionTable.NEW) ||
-                                (opcode == InstructionTable.newarray) ||
-                                (opcode == InstructionTable.anewarray) ||
-                                (opcode == InstructionTable.multianewarray)) {
-                            instruction.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
-                        }
-                    }
+                    InjectDynamicMEMCount(routine);
                 }
             } else if (classname.equals("AStarStrategy.class")) {
                 InjectIntoStrategy(ci);
@@ -53,13 +44,27 @@ public class TestMetrics {
                 InjectIntoStrategy(ci);
             }else if(classname.equals("DepthFirstSearchStrategy.class")){
                 InjectIntoStrategy(ci);
-            }
+            }else if(classname.equals("Coordinate.class")){
+                InjectIntoCoordinate(ci);
+            }else if(classname.equals("RobotController.class"))
+                InjectRobotController(ci);
 
             ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
         }
     }
 
 
+    static synchronized void InjectDynamicMEMCount(Routine routine){
+        for (Instruction instruction : routine.getInstructions()) {
+            int opcode = instruction.getOpcode();
+            if ((opcode == InstructionTable.NEW) ||
+                    (opcode == InstructionTable.newarray) ||
+                    (opcode == InstructionTable.anewarray) ||
+                    (opcode == InstructionTable.multianewarray)) {
+                instruction.addBefore("TestMetrics", "MEMCount", new Integer(opcode));
+            }
+        }
+    }
 
     static synchronized void InjectDynamicINSTCount(Routine routine){
         for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
@@ -82,6 +87,51 @@ public class TestMetrics {
     static synchronized void InjectDynamicMETHODCount(Routine routine){
         routine.addBefore("TestMetrics", "dynMETHCount", new Integer(1));
     }
+
+
+
+    static synchronized void InjectRobotController(ClassInfo ci){
+        for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
+            Routine routine = (Routine) e.nextElement();
+            InjectDynamicMETHODCount(routine);
+            InjectDynamicINSTCount(routine);
+            if(routine.getMethodName().equals("run")) {
+                boolean first_cycle = false;
+                int first_cycle_run = 0;
+                int second_cycle_run = 0;
+                int bb_size = 0;
+                for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
+                    bb_size++;
+                }
+                for(Instruction inst : routine.getInstructions()){
+                    if(inst.getOpcode() == InstructionTable.sipush && !first_cycle){
+                        System.out.println(inst.getOperandValue());
+                        first_cycle_run = inst.getOperandValue();
+                        first_cycle = true;
+                    }else{
+                        System.out.println(inst.getOperandValue());
+                        second_cycle_run = inst.getOperandValue();
+                    }
+                }
+                System.out.println("Total BB's for Run: " + (first_cycle_run * second_cycle_run * bb_size));
+            }
+            if(routine.getMethodName().equals("observe")){
+                for(Instruction inst : routine.getInstructions()){
+                    if(inst.getOpcode() == InstructionTable.sipush){
+                        System.out.println("For Size: " + inst.getOperandValue());
+                    }
+                }
+            }
+        }
+    }
+
+    public static synchronized void dynRobotControllerBBCount(int bb_count){
+
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setObserveBB(metricsThread.getObserveBB()+bb_count);
+    }
+
+
     private static void InjectIntoStrategy(ClassInfo ci){
         for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
             Routine routine = (Routine) e.nextElement();
@@ -119,12 +169,29 @@ public class TestMetrics {
                 }
             }else if(routine.getMethodName().equals("solveAux") &&
                     ci.getClassName().substring(ci.getClassName().lastIndexOf("/")+1).equals("DepthFirstSearchStrategy")){
-                    routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                        routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
             }
         }
     }
 
-
+    private static synchronized void InjectIntoCoordinate(ClassInfo ci) {
+        for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
+            Routine routine = (Routine) e.nextElement();
+//            InjectDynamicMETHODCount(routine);
+//            InjectDynamicINSTCount(routine);
+            if (routine.getMethodName().equals("getUnvisitedNeighboors")) {
+                for (Instruction instr : routine.getInstructions()) {
+                    int opcode = instr.getOpcode();
+                    if ((opcode == InstructionTable.NEW) ||
+                            (opcode == InstructionTable.newarray) ||
+                            (opcode == InstructionTable.anewarray) ||
+                            (opcode == InstructionTable.multianewarray)) {
+                        instr.addBefore("TestMetrics", "MEMCount", new Integer(1));
+                    }
+                }
+            }
+        }
+    }
 
     public static synchronized void StartTimer(int i){
         StartTime = new Date();
