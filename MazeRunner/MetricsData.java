@@ -14,9 +14,13 @@ public class MetricsData {
     private int methodsCount = 0;
     private int memoryCalls = 0;
     private int loopRuns = 0;
-
+    private int velocity = 0;
     private long observeBB = 0;
     private float percetangeObserve = 0;
+
+
+    private long runBB = 0;
+
 
     public MetricsData(){
 
@@ -29,6 +33,12 @@ public class MetricsData {
     public MetricsData(long threadId, String requestQuery){
         this.threadId = threadId;
         this.requestQuery = requestQuery;
+    }
+
+    public MetricsData(long threadId, String requestQuery, int velo){
+        this.threadId = threadId;
+        this.requestQuery = requestQuery;
+        this.velocity = velo;
     }
 
     @DynamoDBHashKey(attributeName = "UUID")
@@ -67,7 +77,7 @@ public class MetricsData {
         this.methodsCount = methodsCount;
     }
 
-    @DynamoDBAttribute(attributeName="memoryCalls")
+    @DynamoDBAttribute(attributeName="memoryAllocs")
     public int getMemoryCalls() {
         return memoryCalls;
     }
@@ -125,10 +135,32 @@ public class MetricsData {
 
     @DynamoDBAttribute(attributeName = "ObserveBBPercentage")
     public float getPercetangeObserve() {
-        return (float) observeBB / this.basicBlocksFound;
+        return (float) observeBB / (this.basicBlocksFound+this.runBB + this.observeBB);
     }
 
     public void setPercetangeObserve(float percetangeObserve) {
         this.percetangeObserve = percetangeObserve;
     }
+    @DynamoDBAttribute(attributeName = "RunBBs")
+    public long getRunBB() {
+        return runBB;
+    }
+
+    public void setRunBB(long runBB) {
+        this.runBB = runBB;
+    }
+
+    @DynamoDBAttribute(attributeName = "RunBBPercentage")
+    public float getPercentageRun(){
+        return (float) runBB / (this.basicBlocksFound+this.runBB + this.observeBB);
+    }
+
+    public int getVelocity() {
+        return velocity;
+    }
+
+    public void setVelocity(int velocity) {
+        this.velocity = velocity;
+    }
+
 }

@@ -25,6 +25,7 @@ public class WebServer {
         server.createContext("/mzrun.html", new MazeHandler());
         server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool()); // creates a default executor
         DynamoController.init();
+        mapper = new DynamoDBMapper(DynamoController.dynamoDB);
         System.out.println("WebServer: Ready to receive mazes.");
         server.start();
     }
@@ -43,9 +44,6 @@ public class WebServer {
         static synchronized void SaveMetrics(){
             try{
                 MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-                DynamoController.init();
-                if(mapper == null)
-                    mapper = new DynamoDBMapper(DynamoController.dynamoDB);
                 mapper.save(metricsThread);
             }catch(Exception e){
                 System.out.println(e.getMessage());
@@ -54,10 +52,11 @@ public class WebServer {
             System.out.println("Thread " + metricsThread.getThreadId() + " Metrics Data:");
             System.out.println("Request for this thread: " + metricsThread.getRequestQuery());
             System.out.println("Instructions Run: " + metricsThread.getInstructionsRun());
-            System.out.println("BasicBlocks Found: " + metricsThread.getBasicBlocksFound());
+            System.out.println("BasicBlocks Found: " + (metricsThread.getBasicBlocksFound() + metricsThread.getObserveBB()));
             System.out.println("Methods Count: " + metricsThread.getMethodsCount());
             System.out.println("Memory Allocs: " + metricsThread.getMemoryCalls());
             System.out.println("Strategy Runs: " + metricsThread.getLoopRuns());
+            System.out.println("RobotController Runs: " + metricsThread.getObserveBB());
         }
     }
 
@@ -68,6 +67,8 @@ public class WebServer {
             System.out.println("Solving maze...");
             String path = CURRENT_PATH + "/" + final_args[7];
             thread_requests.get(Thread.currentThread().getId()).setUUID(final_args[7].substring(final_args[7].lastIndexOf("/")+1));
+            thread_requests.get(Thread.currentThread().getId()).setVelocity(Integer.parseInt(final_args[4]));
+
             Main.main(final_args);
 
             return Files.readAllBytes(Paths.get(path));

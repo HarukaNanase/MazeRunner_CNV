@@ -36,6 +36,8 @@ public class TestMetrics {
                     InjectDynamicINSTCount(routine);
                     InjectDynamicMEMCount(routine);
                 }
+                ci.addBefore("TestMetrics", "StartTimer", new Integer(0));
+                ci.addAfter("TestMetrics", "EndTimer", new Integer(0));
             } else if (classname.equals("AStarStrategy.class")) {
                 InjectIntoStrategy(ci);
             }
@@ -75,7 +77,7 @@ public class TestMetrics {
 
     public static synchronized void dynINSTCount(int instr_count){
         MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-        metricsThread.setInstructionsRun(metricsThread.getInstructionsRun()+instr_count);
+       // metricsThread.setInstructionsRun(metricsThread.getInstructionsRun()+instr_count);
         metricsThread.setBasicBlocksFound(metricsThread.getBasicBlocksFound()+1);
     }
 
@@ -93,42 +95,57 @@ public class TestMetrics {
     static synchronized void InjectRobotController(ClassInfo ci){
         for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
             Routine routine = (Routine) e.nextElement();
-            InjectDynamicMETHODCount(routine);
-            InjectDynamicINSTCount(routine);
+            //InjectDynamicMETHODCount(routine);
+            //InjectDynamicINSTCount(routine);
+            long first_observe_for = 0;
+            long second_observe_for = 0;
+            boolean firstIsDone = false;
             if(routine.getMethodName().equals("run")) {
-                boolean first_cycle = false;
-                int first_cycle_run = 0;
-                int second_cycle_run = 0;
-                int bb_size = 0;
                 for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                    bb_size++;
+                    bb.addBefore    ("TestMetrics", "RobotControllerRunCount", new Integer(1));
                 }
                 for(Instruction inst : routine.getInstructions()){
-                    if(inst.getOpcode() == InstructionTable.sipush && !first_cycle){
-                        System.out.println(inst.getOperandValue());
-                        first_cycle_run = inst.getOperandValue();
-                        first_cycle = true;
-                    }else{
-                        System.out.println(inst.getOperandValue());
-                        second_cycle_run = inst.getOperandValue();
+                    if(inst.getOpcode() == InstructionTable.sipush) {
+                        if (!firstIsDone) {
+                            first_observe_for = inst.getOperandValue();
+                            firstIsDone = true;
+                        }
+                        else
+                            second_observe_for = inst.getOperandValue();
+
                     }
+                    //int velocity = WebServer.getHashMap().get(Thread.currentThread().getId()).getVelocity();
+                     //   System.out.println(inst.getOperandValue());
                 }
-                System.out.println("Total BB's for Run: " + (first_cycle_run * second_cycle_run * bb_size));
+                System.out.println("Run fors: " + first_observe_for + " and " + second_observe_for);
+                long bbs = ((first_observe_for/50 * second_observe_for * 3)+(first_observe_for/50 * 3) + 2)*1026;
+                System.out.println("First parcel: " + ((first_observe_for/50 * second_observe_for * 3)));
+                System.out.println("Second parcel: " + (first_observe_for/50 *3));
+                System.out.println("Third parcel: " + 2);
+                System.out.println("Multiplier: " + 1026);
+                System.out.println("Run BBs:" + bbs);
+
             }
             if(routine.getMethodName().equals("observe")){
-                for(Instruction inst : routine.getInstructions()){
-                    if(inst.getOpcode() == InstructionTable.sipush){
-                        System.out.println("For Size: " + inst.getOperandValue());
-                    }
+                for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
+                    bb.addBefore("TestMetrics", "RobotControlerObserveCount", new Integer(1));
                 }
+
+
             }
         }
     }
 
-    public static synchronized void dynRobotControllerBBCount(int bb_count){
-
+    public static synchronized void RobotControllerRunCount(int run){
         MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-        metricsThread.setObserveBB(metricsThread.getObserveBB()+bb_count);
+        metricsThread.setRunBB(metricsThread.getRunBB()+1);
+    }
+
+
+
+    public static synchronized void RobotControlerObserveCount(int bb_count){
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setObserveBB(metricsThread.getObserveBB()+1);
     }
 
 
