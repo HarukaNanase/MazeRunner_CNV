@@ -4,6 +4,9 @@ javac -cp ..\..\..\src/ ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze
 javac -cp aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* ..\..\..\DynamoController.java -d .
 javac -cp BIT/;;..\..\..\src\;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\ ..\..\..\TestMetrics.java -d .
 javac -cp BIT/;;..\..\..\src\;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\ ..\..\..\MetricsData.java -d .
+
+
+javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze.java -d .
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.java -d .
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy.java -d .
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\BreadthFirstSearchStrategy.java -d .
@@ -16,13 +19,14 @@ java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-pa
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\BreadthFirstSearchStrategy output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\DepthFirstSearchStrategy output/
-java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate output/
+REM java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\RobotController output/
+REM java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze output/
 
 
 
-del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
-copy /y .\output\Coordinate.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
+REM del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
+REM copy /y .\output\Coordinate.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy.class
 copy /y .\output\AStarStrategy.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy.class
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\BreadthFirstSearchStrategy.class
@@ -32,6 +36,9 @@ copy /y .\output\DepthFirstSearchStrategy.class pt\ulisboa\tecnico\meic\cnv\maze
 
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\RobotController.class
 copy /y .\output\RobotController.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\RobotController.class
+REM del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze.class
+REM copy /y .\output\Maze.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze.class
+
 
 
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Main.class

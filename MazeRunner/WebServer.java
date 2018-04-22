@@ -56,7 +56,9 @@ public class WebServer {
             System.out.println("Methods Count: " + metricsThread.getMethodsCount());
             System.out.println("Memory Allocs: " + metricsThread.getMemoryCalls());
             System.out.println("Strategy Runs: " + metricsThread.getLoopRuns());
-            System.out.println("RobotController Runs: " + metricsThread.getObserveBB());
+            System.out.println("Strategy Observes: " + metricsThread.getLoopObserves());
+            System.out.println("Estimated BB for Run: " + metricsThread.getEstimatedRunBBL());
+            System.out.println("Estimated BB for Observe: " + metricsThread.getEstimatedObserveBBL());
         }
     }
 

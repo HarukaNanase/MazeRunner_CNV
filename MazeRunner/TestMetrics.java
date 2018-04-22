@@ -12,6 +12,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 import java.util.Map;
+import java.util.concurrent.SynchronousQueue;
 
 public class TestMetrics {
 
@@ -21,6 +22,9 @@ public class TestMetrics {
     private static int bb_count = 0;
     private static int instr_count = 0;
     private static int method_count = 0;
+    private static int first_for;
+    private static int second_for;
+    static boolean firstIsDone = false;
     private static String maze_arguments = null;
     private static DynamoDBMapper mapper = null;
     public static void main(String[] argv) {
@@ -47,10 +51,17 @@ public class TestMetrics {
             }else if(classname.equals("DepthFirstSearchStrategy.class")){
                 InjectIntoStrategy(ci);
             }else if(classname.equals("Coordinate.class")){
-                InjectIntoCoordinate(ci);
+               // InjectIntoCoordinate(ci);
             }else if(classname.equals("RobotController.class"))
+            {
                 InjectRobotController(ci);
-
+            }
+            else if(classname.equals("Maze.class")){
+                for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
+                    Routine routine = (Routine) e.nextElement();
+                    //InjectDynamicINSTCount(routine);
+                }
+            }
             ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
         }
     }
@@ -93,49 +104,27 @@ public class TestMetrics {
 
 
     static synchronized void InjectRobotController(ClassInfo ci){
+        //MetricsData metrics = WebServer.getHashMap().get(Thread.currentThread().getId());
         for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
             Routine routine = (Routine) e.nextElement();
             //InjectDynamicMETHODCount(routine);
             //InjectDynamicINSTCount(routine);
-            long first_observe_for = 0;
-            long second_observe_for = 0;
-            boolean firstIsDone = false;
+
+
             if(routine.getMethodName().equals("run")) {
                 for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                    bb.addBefore    ("TestMetrics", "RobotControllerRunCount", new Integer(1));
+                    //bb.addBefore("TestMetrics", "RobotControllerRunCount", new Integer(1));
                 }
-                for(Instruction inst : routine.getInstructions()){
-                    if(inst.getOpcode() == InstructionTable.sipush) {
-                        if (!firstIsDone) {
-                            first_observe_for = inst.getOperandValue();
-                            firstIsDone = true;
-                        }
-                        else
-                            second_observe_for = inst.getOperandValue();
-
-                    }
-                    //int velocity = WebServer.getHashMap().get(Thread.currentThread().getId()).getVelocity();
-                     //   System.out.println(inst.getOperandValue());
-                }
-                System.out.println("Run fors: " + first_observe_for + " and " + second_observe_for);
-                long bbs = ((first_observe_for/50 * second_observe_for * 3)+(first_observe_for/50 * 3) + 2)*1026;
-                System.out.println("First parcel: " + ((first_observe_for/50 * second_observe_for * 3)));
-                System.out.println("Second parcel: " + (first_observe_for/50 *3));
-                System.out.println("Third parcel: " + 2);
-                System.out.println("Multiplier: " + 1026);
-                System.out.println("Run BBs:" + bbs);
-
             }
             if(routine.getMethodName().equals("observe")){
                 for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                    bb.addBefore("TestMetrics", "RobotControlerObserveCount", new Integer(1));
+                   // bb.addBefore("TestMetrics", "RobotControlerObserveCount", new Integer(1));
                 }
 
 
             }
         }
     }
-
     public static synchronized void RobotControllerRunCount(int run){
         MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
         metricsThread.setRunBB(metricsThread.getRunBB()+1);
@@ -169,6 +158,10 @@ public class TestMetrics {
                                     String s = new String(name, "UTF-8");
                                     if (s.equals("observe")) {
                                         System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        instr.addBefore("TestMetrics", "StrategyObserves", new Integer(1));
+                                    }
+                                    else if(s.equals("run")){
+                                        System.out.println("Found Run Index: " + instr.getOperandValue());
                                         instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
                                     }
 
@@ -186,7 +179,33 @@ public class TestMetrics {
                 }
             }else if(routine.getMethodName().equals("solveAux") &&
                     ci.getClassName().substring(ci.getClassName().lastIndexOf("/")+1).equals("DepthFirstSearchStrategy")){
-                        routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                        //routine.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                for (Instruction instr : routine.getInstructions()) {
+                    int opcode = instr.getOpcode();
+                    if (instr.getOpcode() == InstructionTable.invokestatic) {
+                        if (routine.getConstantPool()[instr.getOperandValue()] instanceof CONSTANT_Methodref_Info) {
+                            short nameTypeIndex = ((CONSTANT_Methodref_Info) routine.getConstantPool()[instr.getOperandValue()]).name_and_type_index;
+                            CONSTANT_NameAndType_Info nameTypeInfo = (CONSTANT_NameAndType_Info) routine.getConstantPool()[nameTypeIndex];
+                            short nameIndex = nameTypeInfo.name_index;
+                            if (routine.getConstantPool()[nameIndex] instanceof CONSTANT_Utf8_Info) {
+                                byte[] name = ((CONSTANT_Utf8_Info) routine.getConstantPool()[nameIndex]).bytes;
+                                try {
+                                    String s = new String(name, "UTF-8");
+                                    if (s.equals("run")) {
+                                        System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                    }
+                                    else if (s.equals("observe")) {
+                                        System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        instr.addBefore("TestMetrics", "StrategyObserves", new Integer(1));
+                                    }
+
+                                } catch (Exception b) {
+                                    b.getMessage();
+                                }
+                            }
+                        }
+                    }}
             }
         }
     }
@@ -246,5 +265,9 @@ public class TestMetrics {
         metricsThread.setLoopRuns(metricsThread.getLoopRuns() + loop_add);
     }
 
+    public static synchronized void StrategyObserves(int loop_add){
+        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
+        metricsThread.setLoopObserves(metricsThread.getLoopObserves() + loop_add);
+    }
 
 }
