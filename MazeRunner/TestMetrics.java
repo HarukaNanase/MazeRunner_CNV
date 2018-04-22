@@ -59,7 +59,7 @@ public class TestMetrics {
             else if(classname.equals("Maze.class")){
                 for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
                     Routine routine = (Routine) e.nextElement();
-                    //InjectDynamicINSTCount(routine);
+                    InjectDynamicINSTCount(routine);
                 }
             }
             ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));

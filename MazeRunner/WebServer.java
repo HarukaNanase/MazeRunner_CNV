@@ -51,7 +51,6 @@ public class WebServer {
             MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
             System.out.println("Thread " + metricsThread.getThreadId() + " Metrics Data:");
             System.out.println("Request for this thread: " + metricsThread.getRequestQuery());
-            System.out.println("Instructions Run: " + metricsThread.getInstructionsRun());
             System.out.println("BasicBlocks Found: " + (metricsThread.getBasicBlocksFound() + metricsThread.getObserveBB()));
             System.out.println("Methods Count: " + metricsThread.getMethodsCount());
             System.out.println("Memory Allocs: " + metricsThread.getMemoryCalls());

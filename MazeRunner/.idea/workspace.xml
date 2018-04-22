@@ -15,11 +15,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="TestMetrics.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="TestMetrics.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/TestMetrics.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="543">
-              <caret line="120" column="21" lean-forward="false" selection-start-line="120" selection-start-column="21" selection-end-line="120" selection-end-column="21" />
+            <state relative-caret-position="611">
+              <caret line="61" column="20" lean-forward="false" selection-start-line="61" selection-start-column="20" selection-end-line="61" selection-end-column="20" />
               <folding />
             </state>
           </provider>
@@ -55,7 +55,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MetricsData.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="MetricsData.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MetricsData.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="589">
@@ -78,10 +78,10 @@
       <file leaf-file-name="WebServer.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/WebServer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="356">
-              <caret line="58" column="86" lean-forward="false" selection-start-line="58" selection-start-column="86" selection-end-line="58" selection-end-column="86" />
+            <state relative-caret-position="680">
+              <caret line="52" column="94" lean-forward="false" selection-start-line="52" selection-start-column="94" selection-end-line="52" selection-end-column="94" />
               <folding>
-                <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+                <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -174,9 +174,9 @@
         <option value="$PROJECT_DIR$/DynamoController.java" />
         <option value="$PROJECT_DIR$/src/pt/ulisboa/tecnico/meic/cnv/mazerunner/maze/RobotController.java" />
         <option value="$USER_HOME$/BIT/BIT/samples/StatisticsTool.java" />
-        <option value="$PROJECT_DIR$/TestMetrics.java" />
-        <option value="$PROJECT_DIR$/WebServer.java" />
         <option value="$PROJECT_DIR$/MetricsData.java" />
+        <option value="$PROJECT_DIR$/WebServer.java" />
+        <option value="$PROJECT_DIR$/TestMetrics.java" />
       </list>
     </option>
   </component>
@@ -403,12 +403,12 @@
       <workItem from="1524218858909" duration="11464000" />
       <workItem from="1524317077547" duration="10236000" />
       <workItem from="1524349993936" duration="3849000" />
-      <workItem from="1524407027863" duration="15836000" />
+      <workItem from="1524407027863" duration="16691000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="156041000" />
+    <option name="totallyTimeSpent" value="156896000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-6" y="-6" width="1933" height="1053" extended-state="6" />
@@ -495,7 +495,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -546,7 +546,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -571,7 +571,7 @@
         <state relative-caret-position="799">
           <caret line="47" column="34" lean-forward="true" selection-start-line="47" selection-start-column="12" selection-end-line="47" selection-end-column="34" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -632,7 +632,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -642,7 +642,7 @@
         <state relative-caret-position="1071">
           <caret line="63" column="0" lean-forward="true" selection-start-line="63" selection-start-column="0" selection-end-line="63" selection-end-column="0" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -653,7 +653,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -663,7 +663,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -847,24 +847,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/TestMetrics.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="543">
-          <caret line="120" column="21" lean-forward="false" selection-start-line="120" selection-start-column="21" selection-end-line="120" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/WebServer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="58" column="86" lean-forward="false" selection-start-line="58" selection-start-column="86" selection-end-line="58" selection-end-column="86" />
-          <folding>
-            <marker date="1524429662303" expanded="true" signature="3684:3867" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/MetricsData.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="589">
@@ -880,6 +862,24 @@
             <element signature="e#6019#6020#0" expanded="true" />
             <element signature="e#6067#6068#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/WebServer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="680">
+          <caret line="52" column="94" lean-forward="false" selection-start-line="52" selection-start-column="94" selection-end-line="52" selection-end-column="94" />
+          <folding>
+            <marker date="1524430036779" expanded="true" signature="3593:3776" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/TestMetrics.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="611">
+          <caret line="61" column="20" lean-forward="false" selection-start-line="61" selection-start-column="20" selection-end-line="61" selection-end-column="20" />
+          <folding />
         </state>
       </provider>
     </entry>
