@@ -170,7 +170,7 @@ public class MetricsData {
         long second_parcel = (first_sipush/this.velocity) * 4;
         long third_parcel = 2;
 
-        return (first_parcel + second_parcel + third_parcel) * (this.loopRuns-1) + (this.loopRuns-1);
+        return (first_parcel + second_parcel + third_parcel) * (this.loopRuns) + (this.loopRuns);
     }
 
     @DynamoDBAttribute(attributeName = "EstimatedObserveBBLs")

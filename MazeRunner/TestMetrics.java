@@ -113,12 +113,12 @@ public class TestMetrics {
 
             if(routine.getMethodName().equals("run")) {
                 for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                    //bb.addBefore("TestMetrics", "RobotControllerRunCount", new Integer(1));
+                //    bb.addBefore("TestMetrics", "RobotControllerRunCount", new Integer(1));
                 }
             }
             if(routine.getMethodName().equals("observe")){
                 for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                   // bb.addBefore("TestMetrics", "RobotControlerObserveCount", new Integer(1));
+                //    bb.addBefore("TestMetrics", "RobotControlerObserveCount", new Integer(1));
                 }
 
 

@@ -19,14 +19,14 @@ java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-pa
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\BreadthFirstSearchStrategy output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\DepthFirstSearchStrategy output/
-REM java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate output/
+java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\RobotController output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze output/
 
 
 
-REM del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
-REM copy /y .\output\Coordinate.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
+del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
+copy /y .\output\Coordinate.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\datastructure\Coordinate.class
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy.class
 copy /y .\output\AStarStrategy.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy.class
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\BreadthFirstSearchStrategy.class
