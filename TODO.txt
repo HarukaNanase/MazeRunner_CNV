@@ -1,0 +1,3 @@
+Fazer instrumentação ao robot controller pelos branches.
+Ao ir pelos branches, podemos sacar a informação de quanta vezes foi executado os branches, dado que um ciclo depende sempre de branches, pelo que podemos analisar o peso do robot sem ter que contar BBL's.
+Dado que o numero de branches vai variar com os valores dos for's automaticamente.	
