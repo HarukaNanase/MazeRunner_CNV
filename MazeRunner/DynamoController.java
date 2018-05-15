@@ -55,6 +55,8 @@ public class DynamoController {
         CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(TABLE_NAME)
                 .withKeySchema(new KeySchemaElement().withAttributeName("UUID").withKeyType(KeyType.HASH))
                 .withAttributeDefinitions(new AttributeDefinition().withAttributeName("UUID").withAttributeType(ScalarAttributeType.S))
+                .withKeySchema(new KeySchemaElement().withAttributeName("MazeType").withKeyType(KeyType.RANGE))
+                .withAttributeDefinitions(new AttributeDefinition().withAttributeName("MazeType").withAttributeType(ScalarAttributeType.S))
                 .withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(1L).withWriteCapacityUnits(1L));
 
         // Create table if it does not exist yet

@@ -1,5 +1,6 @@
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
 
@@ -17,9 +18,9 @@ public class MetricsData {
     private int velocity = 0;
     private long observeBB = 0;
     private float percetangeObserve = 0;
-
+    private String MazeType = null;
     private long runBB = 0;
-
+    private long branches_taken = 0;
 
     public MetricsData(){
 
@@ -49,6 +50,14 @@ public class MetricsData {
         this.UUID = UUID;
     }
 
+    @DynamoDBRangeKey(attributeName = "MazeType")
+    public String getMazeType(){
+      return this.MazeType;
+    }
+
+    public void setMazeType(String maze){
+      this.MazeType = maze;
+    }
    // @DynamoDBAttribute(attributeName="instructionsRun")
     public long getInstructionsRun() {
         return instructionsRun;
@@ -210,5 +219,8 @@ public class MetricsData {
         this.loopObserves = loopObserves;
     }
 
+    @DynamoDBAttribute(attributeName="BranchesTaken")
+    public long getBranches_taken(){ return this.branches_taken; }
+    public void setBranches_taken(long taken){ this.branches_taken = taken; }
 
 }

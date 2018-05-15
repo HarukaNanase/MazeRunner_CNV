@@ -41,7 +41,7 @@ public class Main {
 		if(args.length < 8) {
 			throw new IllegalArgumentException("InsuficientArguments - The maze runners do not have enough information to solve the maze");
 		}
-
+		
 		int xStart, yStart, xFinal, yFinal, velocity;
 		try {
 			xStart = Integer.parseInt(args[0]);
@@ -74,8 +74,8 @@ public class Main {
 		MazeRunningStrategy strategy = FactoryMazeRunningStrategies.CreateMazeRunningStrategy(args[5]);
 		String mazeFile = args[6];
 		String mazeSolvedFile = args[7];
-    	Maze maze = null;
-
+        Maze maze = null;
+        
         // Read the maze from the file
         try {
            FileInputStream fileIn = new FileInputStream(mazeFile);
@@ -91,14 +91,14 @@ public class Main {
            c.printStackTrace();
            return;
         }
-
+        
         // Solve the maze.
         strategy.solve(maze, xStart, yStart, xFinal, yFinal, velocity);
-
+       
         // Choose the way to render the maze and rendered it
         RenderMaze renderMaze = new RenderMazeHTMLClientCanvas();
-		String mazeRendered = renderMaze.render(maze, velocity);
-
+        String mazeRendered = renderMaze.render(maze, velocity);
+        		
         // Write the maze solved to the output mazeOutputFile
         List<String> lines = Arrays.asList(mazeRendered);
         Path file = Paths.get(mazeSolvedFile);
@@ -109,5 +109,5 @@ public class Main {
 			throw new CantGenerateOutputFileException("Problems writing to " + mazeSolvedFile + " output file!");
 		}
 	}
-
+	
 }

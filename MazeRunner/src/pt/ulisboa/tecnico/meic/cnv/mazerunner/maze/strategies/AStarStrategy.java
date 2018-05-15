@@ -12,6 +12,7 @@ import pt.ulisboa.tecnico.meic.cnv.mazerunner.maze.exceptions.InvalidCoordinates
 import pt.ulisboa.tecnico.meic.cnv.mazerunner.maze.strategies.datastructure.Coordinate;
 
 public class AStarStrategy extends MazeRunningStrategy {
+	
 	private class Node {
 		
 		private Coordinate coordinate;
@@ -72,7 +73,7 @@ public class AStarStrategy extends MazeRunningStrategy {
 	@Override
 	public void run(Maze maze, int xStart, int yStart, int xFinal, int yFinal, int velocity) throws InvalidCoordinatesException {
 		final Node finalNode = new Node(xFinal, yFinal, 0, 0, 0);
-
+		
 		Queue<Node> openList = new PriorityQueue<Node>(1,new NodeComparator());
 		HashMap<Coordinate,Node> openMap = new HashMap<Coordinate, Node>();		
 		
@@ -86,7 +87,7 @@ public class AStarStrategy extends MazeRunningStrategy {
 		while(!openList.isEmpty()) {
 			Node examiningNode = openList.remove();
 			openMap.remove(examiningNode.coordinate);
-
+			
 			RobotController.observe(5, maze.getPosPhoto(examiningNode.getX(), examiningNode.getY()));
 			maze.setPos(examiningNode.getX(), examiningNode.getY(), Maze.VISITED_CHAR);
 			

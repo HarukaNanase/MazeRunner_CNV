@@ -10,21 +10,21 @@ public class RobotController {
 	/*
 	 * Look at the posistion's photo and decide the next step.
 	 */
-		public static void observe(int observeTime, byte[] photo) {
-			byte photoAnalyzer = 0;
-			long currentObserveTime = 0;
-			for(int k = 0; k < observeTime; k++) {
-				for(int i = 0; i < 1250; i++) {
-					// Analyzing the photo of the position.
-					for(int photoIndex = 0; photoIndex < photo.length; photoIndex++) {
-						photoAnalyzer = photo[photoIndex];
-					}
-					currentObserveTime = System.currentTimeMillis();
+	public static void observe(int observeTime, byte[] photo) {
+		byte photoAnalyzer = 0;
+		long currentObserveTime = 0;
+		for(int k = 0; k < observeTime; k++) {
+			for(int i = 0; i < 25; i++) {
+				// Analyzing the photo of the position.
+				for(int photoIndex = 0; photoIndex < photo.length; photoIndex++) {
+					photoAnalyzer = photo[photoIndex];
 				}
+				currentObserveTime = System.currentTimeMillis();
 			}
-			PHOTO_ANALYZER = photoAnalyzer;
-			CURRENT_OBSERVE_TIME = currentObserveTime;
 		}
+		PHOTO_ANALYZER = photoAnalyzer;
+		CURRENT_OBSERVE_TIME = currentObserveTime;
+	}
 	
 	/*
 	 * Running to the next maze position.
@@ -34,7 +34,7 @@ public class RobotController {
 		int minVelocityLoops = 10000;
 		// Time to run into the next maze position.
 		for(int k = 0; k < minVelocityLoops / velocity; k++) {
-			for(int i = 0; i < 4500; i++) {
+			for(int i = 0; i < 75; i++) {
 				currentRunTime = System.currentTimeMillis();
 			}
 		}

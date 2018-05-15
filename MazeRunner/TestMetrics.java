@@ -11,9 +11,15 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.SynchronousQueue;
 
+
+class Branch {
+    public int taken;
+    public int not_taken;
+}
 public class TestMetrics {
 
     private static Date StartTime = null;
@@ -27,11 +33,14 @@ public class TestMetrics {
     static boolean firstIsDone = false;
     private static String maze_arguments = null;
     private static DynamoDBMapper mapper = null;
+    static Hashtable branch = null;
+    static int pc = 0;
+
     public static void main(String[] argv) {
         String infilename = argv[0];
         infilename += ".class";
         if (infilename.endsWith(".class")) {
-            String classname = infilename.substring(infilename.lastIndexOf("\\") + 1);
+            String classname = infilename.substring(infilename.lastIndexOf(System.getProperty("file.separator")) + 1);
             ClassInfo ci = new ClassInfo(infilename);
             if (classname.equals("Main.class")) {
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
@@ -62,7 +71,7 @@ public class TestMetrics {
                     InjectDynamicINSTCount(routine);
                 }
             }
-            ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf("\\") + 1));
+            ci.write(argv[1] + System.getProperty("file.separator") + infilename.substring(infilename.lastIndexOf(System.getProperty("file.separator")) + 1));
         }
     }
 
@@ -86,6 +95,59 @@ public class TestMetrics {
         }
     }
 
+    static synchronized void InjectDynamicBranchCount(ClassInfo ci){
+        int total = 0;
+        for (Enumeration e=ci.getRoutines().elements();e.hasMoreElements(); ){
+            Routine routine = (Routine) e.nextElement();
+            Instruction[] instructions = routine.getInstructions();
+            for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
+                BasicBlock bb = (BasicBlock) b.nextElement();
+                Instruction instr = (Instruction)instructions[bb.getEndAddress()];
+                short instr_type = InstructionTable.InstructionTypeTable[instr.getOpcode()];
+                if (instr_type == InstructionTable.CONDITIONAL_INSTRUCTION) {
+                    instr.addBefore("TestMetrics", "Offset", new Integer(instr.getOffset()));
+                    instr.addBefore("TestMetrics", "Branch", new String("BranchOutcome"));
+                }
+            }
+            String method = new String(routine.getMethodName());
+            routine.addBefore("TestMetrics", "EnterMethod", method);
+            routine.addAfter("TestMetrics", "LeaveMethod", method);
+        }
+    }
+
+
+    public static void EnterMethod(String s) {
+        branch = new Hashtable();
+    }
+
+    public static void LeaveMethod(String s) {
+        for (Enumeration e = branch.keys(); e.hasMoreElements(); ) {
+            Integer key = (Integer) e.nextElement();
+            Branch b = (Branch) branch.get(key);
+                int total = b.taken + b.not_taken;
+            WebServer.getHashMap().get(Thread.currentThread().getId()).setBranches_taken(
+                    WebServer.getHashMap().get(Thread.currentThread().getId()).getBranches_taken()+ b.taken);
+            }
+    }
+
+    public static void Offset(int offset) {
+        pc = offset;
+    }
+
+    public static void Branch(int brOutcome) {
+        Integer n = new Integer(pc);
+        Branch b = (Branch) branch.get(n);
+        if (b == null) {
+            b = new Branch();
+            branch.put(n,b);
+        }
+        if (brOutcome == 0)
+            b.taken++;
+        else
+            b.not_taken++;
+    }
+
+
     public static synchronized void dynINSTCount(int instr_count){
         MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
        // metricsThread.setInstructionsRun(metricsThread.getInstructionsRun()+instr_count);
@@ -104,26 +166,7 @@ public class TestMetrics {
 
 
     static synchronized void InjectRobotController(ClassInfo ci){
-        //MetricsData metrics = WebServer.getHashMap().get(Thread.currentThread().getId());
-        for(Enumeration e = ci.getRoutines().elements(); e.hasMoreElements();){
-            Routine routine = (Routine) e.nextElement();
-            //InjectDynamicMETHODCount(routine);
-            //InjectDynamicINSTCount(routine);
-
-
-            if(routine.getMethodName().equals("run")) {
-                for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                //    bb.addBefore("TestMetrics", "RobotControllerRunCount", new Integer(1));
-                }
-            }
-            if(routine.getMethodName().equals("observe")){
-                for(BasicBlock bb : routine.getBasicBlocks().getBasicBlocks()){
-                //    bb.addBefore("TestMetrics", "RobotControlerObserveCount", new Integer(1));
-                }
-
-
-            }
-        }
+        InjectDynamicBranchCount(ci);
     }
     public static synchronized void RobotControllerRunCount(int run){
         MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
