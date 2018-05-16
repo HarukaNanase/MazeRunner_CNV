@@ -1,3 +1,5 @@
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.xray.model.Http;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -8,12 +10,17 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class LoadBalancer {
-    static ArrayList<EC2Machine> instances = new ArrayList<EC2Machine>();
-
+    private static EC2AutoScaler scaler = null;
+    private static DynamoDBMapper mapper = null;
     public static void main(String[] args) throws Exception{
-        HttpServer server = HttpServer.create(new InetSocketAddress(8001), 0);
+        scaler = new EC2AutoScaler();
+        DynamoController.init();
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/alive", new AliveHandler());
         server.createContext("/launchmachine", new LauncherHandler());
         server.createContext("/mzrun.html", new LoadBalancerHandler());
@@ -22,13 +29,15 @@ public class LoadBalancer {
         server.start();
     }
 
+
+
     static class LoadBalancerHandler implements HttpHandler{
         @Override
         public void handle(HttpExchange t) throws IOException{
-            EC2Machine bestMachine = getLessOccupiedMachine();
+            EC2Machine bestMachine = scaler.getBestMachine();
             String query = t.getRequestURI().getQuery();
             if(bestMachine != null){
-                System.out.println("Redirecting request to: " + bestMachine.getPublicDNS());
+                System.out.println("Dispatching request to: " + bestMachine.getPublicDNS());
                 byte[] solvedMaze = bestMachine.getMazeSolution(query);
                 t.sendResponseHeaders(200, solvedMaze.length);
                 OutputStream os = t.getResponseBody();
@@ -48,13 +57,7 @@ public class LoadBalancer {
     static class LauncherHandler implements HttpHandler{
         @Override
         public void handle(HttpExchange t) throws IOException{
-            EC2Machine machine = new EC2Machine();
-            try{
-                machine.launchMachine();
-                instances.add(machine);
-            }catch(Exception e){
-                e.printStackTrace();
-            }
+            scaler.createNewMachine();
             t.sendResponseHeaders(200, "Machine ran sucessfully".getBytes().length);
             OutputStream os = t.getResponseBody();
             os.write("Machine ran sucessfully".getBytes());
@@ -66,7 +69,7 @@ public class LoadBalancer {
     static class AliveHandler implements HttpHandler{
         @Override
         public void handle(HttpExchange t) throws IOException {
-            String response = "This is quite a nice tea!";
+            String response = "This is quite a nice tea!\n" + scaler;
             t.sendResponseHeaders(200, response.getBytes().length);
             OutputStream os = t.getResponseBody();
             os.write(response.getBytes());
@@ -74,17 +77,22 @@ public class LoadBalancer {
         }
     }
 
-    public static EC2Machine getLessOccupiedMachine(){
-        EC2Machine bestMachine = null;
-        int minimumRequestCount = -1;
-        for(EC2Machine machine : instances){
-            if(bestMachine == null || machine.getServerRequestCount() < minimumRequestCount){
-                bestMachine = machine;
-                minimumRequestCount = machine.getServerRequestCount();
-            }
-        }
-        return bestMachine;
+
+    public int calculateRequestWorkload(String query){
+        //TO DO: return workload for a specific request from 1 to 20.
+        return 1;
     }
 
+    public static List<MetricsData> getSimilarMazes(String mazetype){
+        if(mapper == null)
+            mapper = new DynamoDBMapper(DynamoController.dynamoDB);
+
+        MetricsData ex = new MetricsData();
+        ex.setMazeType(mazetype);
+        DynamoDBQueryExpression<MetricsData> query_map = new DynamoDBQueryExpression<MetricsData>();
+        query_map.setHashKeyValues(ex);
+
+        return mapper.query(MetricsData.class, query_map);
+    }
 
 }

@@ -200,12 +200,12 @@ public class TestMetrics {
                                 try {
                                     String s = new String(name, "UTF-8");
                                     if (s.equals("observe")) {
-                                        System.out.println("Found Observe Index: " + instr.getOperandValue());
-                                        instr.addBefore("TestMetrics", "StrategyObserves", new Integer(1));
+                                        //System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        //instr.addBefore("TestMetrics", "StrategyObserves", new Integer(1));
                                     }
                                     else if(s.equals("run")){
-                                        System.out.println("Found Run Index: " + instr.getOperandValue());
-                                        instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                        //System.out.println("Found Run Index: " + instr.getOperandValue());
+                                        //instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
                                     }
 
                                 } catch (Exception b) {
@@ -235,12 +235,12 @@ public class TestMetrics {
                                 try {
                                     String s = new String(name, "UTF-8");
                                     if (s.equals("run")) {
-                                        System.out.println("Found Observe Index: " + instr.getOperandValue());
-                                        instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
+                                        //System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        //instr.addBefore("TestMetrics", "StrategyRuns", new Integer(1));
                                     }
                                     else if (s.equals("observe")) {
-                                        System.out.println("Found Observe Index: " + instr.getOperandValue());
-                                        instr.addBefore("TestMetrics", "StrategyObserves", new Integer(1));
+                                        //System.out.println("Found Observe Index: " + instr.getOperandValue());
+                                        //instr.addBefore("TestMetrics", "StrategyObserves", new Integer(1));
                                     }
 
                                 } catch (Exception b) {
@@ -303,14 +303,8 @@ public class TestMetrics {
         metricsThread.setMemoryCalls(metricsThread.getMemoryCalls() + 1);
     }
 
-    public static synchronized void StrategyRuns(int loop_add){
-        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-        metricsThread.setLoopRuns(metricsThread.getLoopRuns() + loop_add);
-    }
 
-    public static synchronized void StrategyObserves(int loop_add){
-        MetricsData metricsThread = WebServer.getHashMap().get(Thread.currentThread().getId());
-        metricsThread.setLoopObserves(metricsThread.getLoopObserves() + loop_add);
-    }
+
+
 
 }

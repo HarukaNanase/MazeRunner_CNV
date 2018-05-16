@@ -5,12 +5,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.RunInstancesResult;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
 import com.amazonaws.services.cloudwatch.model.Dimension;
@@ -20,6 +15,8 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -28,19 +25,21 @@ import java.util.*;
 public class EC2Machine {
 
     private String REGION = "us-east-1";
-    private String IMAGE_ID = "ami-1853ac65";
+    private String IMAGE_ID = "ami-0f63b8b3b5e15eec1";
     private String INSTANCE_TYPE = "t2.micro";
     private int MIN_COUNT = 1;
     private int MAX_COUNT = 1;
     private String KEY_NAME = "CNV_AWS";
     private String SECURITY_GROUP = "CNV-HTTP-SSH";
     private Set<Instance> instances;
-    private AmazonEC2 ec2;
+    public AmazonEC2 ec2;
     private AmazonCloudWatch cloudWatch;
     private String publicDNS = null;
     private String instanceId = null;
-    private String REQUESTCOUNT_ENDPOINT = "/requestcount";
+    private String REQUESTCOUNT_ENDPOINT = "/mazecount";
     private String SOLVER_ENDPOINT = "/mzrun.html";
+    private String ALIVE_ENDPOINT = "/alive";
+    private String PROTOCOL = "http://";
     private AWSCredentials credentials = null;
     public EC2Machine() {
         instances = new HashSet<Instance>();
@@ -67,6 +66,9 @@ public class EC2Machine {
         return this.publicDNS;
     }
 
+    public String getInstanceId(){
+        return this.instanceId;
+    }
 
     public void launchMachine() throws Exception{
         this.init();
@@ -92,7 +94,37 @@ public class EC2Machine {
         }
 
         this.publicDNS = getInstancePublicDNS();
+        while(!getInstanceReadyStatus(instanceId))
+            Thread.sleep(5000);
         System.out.println(publicDNS);
+    }
+
+    public boolean getInstanceReadyStatus(String instanceId){
+        DescribeInstanceStatusRequest describeInstanceRequest = new DescribeInstanceStatusRequest().withInstanceIds(instanceId);
+        DescribeInstanceStatusResult describeInstanceResult = ec2.describeInstanceStatus(describeInstanceRequest);
+        List<InstanceStatus> state = describeInstanceResult.getInstanceStatuses();
+        if(state.size() < 1){
+            try {
+                Thread.sleep(5000);
+            }catch(InterruptedException ie){
+
+            }
+            return getInstanceReadyStatus(instanceId);
+        }
+        HttpURLConnection conn = null;
+        try {
+            //Create connection
+            URL url = new URL("http://" + this.publicDNS + ALIVE_ENDPOINT);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String counterValue = rd.readLine();
+            System.out.println("Machine " + instanceId + " is ready.");
+            return (!counterValue.equals(""));
+        } catch (Exception e) {
+            return false;
+        }
+
     }
 
     public String getInstancePublicDNS(){
@@ -124,7 +156,7 @@ public class EC2Machine {
         HttpURLConnection conn = null;
         try {
             //Create connection
-            URL url = new URL(this.publicDNS + REQUESTCOUNT_ENDPOINT);
+            URL url = new URL("http://"+this.publicDNS + REQUESTCOUNT_ENDPOINT);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -141,32 +173,51 @@ public class EC2Machine {
         }
     }
 
+    public int getServerWorkload(){
+        return -1;
+    }
+
     public byte[] getMazeSolution(String request){
         String endpoint = this.publicDNS + SOLVER_ENDPOINT + "?"+request;
         HttpURLConnection conn = null;
+        DataInputStream rd = null;
         try{
-            URL url = new URL(endpoint);
+            URL url = new URL("http://" + endpoint);
             conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while(!(line = rd.readLine()).equals("")){
-                sb.append(line);
-            }
-            return sb.toString().getBytes();
+            conn.setRequestMethod("GET");
+            System.out.println("Content-Length: " + conn.getContentLength());
+            byte[] response = new byte[conn.getContentLength()];
+            rd = (new DataInputStream(conn.getInputStream()));
+            int len = 0;
+            while(len < response.length)
+                len += rd.read(response, len, response.length - len);
+            System.out.println("Got: "+len+" bytes.");
+            return response;
+
         }catch(Exception e){
             e.printStackTrace();
             return null;
         }finally{
             if(conn != null)
                 conn.disconnect();
+            if(rd != null)
+                try{
+                    rd.close();}
+                catch(IOException ie){
+                    //
+                }
         }
+    }
+
+
+    public int getMachineWorkLoad(){
+        //TO DO: Implement calculations for the machine workload.
+        return 0;
     }
 
     public boolean terminateMachine(){
         //int requestCount = getServerRequestCount();
-        int requestCount = 0;
+        int requestCount = getServerRequestCount();
         if(requestCount == 0) {
             TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
             termInstanceReq.withInstanceIds(instanceId);

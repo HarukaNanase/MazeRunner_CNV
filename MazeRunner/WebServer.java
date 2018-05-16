@@ -58,15 +58,23 @@ public class WebServer {
 
     static class MazeHandler implements HttpHandler {
         @Override
-        public void handle(HttpExchange t) throws IOException {
-            thread_requests.put(Thread.currentThread().getId(), new MetricsData(Thread.currentThread().getId(), t.getRequestURI().getQuery()));
-            byte[] response = SolveMaze(t.getRequestURI().getQuery());
-            t.sendResponseHeaders(200, response.length);
-            OutputStream os = t.getResponseBody();
-            os.write(response);
-            os.close();
-            SaveMetrics();
-            DecrementRequests();
+        public void handle(HttpExchange t) throws IOException{
+            try {
+                thread_requests.put(Thread.currentThread().getId(), new MetricsData(Thread.currentThread().getId(), t.getRequestURI().getQuery()));
+                byte[] response = SolveMaze(t.getRequestURI().getQuery());
+                t.sendResponseHeaders(200, response.length);
+                OutputStream os = t.getResponseBody();
+                os.write(response);
+                os.close();
+		if(response.length > 50)
+                	SaveMetrics();
+                DecrementRequests();
+            }catch(Exception io){
+                t.sendResponseHeaders(200, io.getMessage().getBytes().length);
+                OutputStream os = t.getResponseBody();
+                os.write(io.getMessage().getBytes());
+                os.close();
+            }
             //System.out.println("Total branches taken: " + thread_requests.get(Thread.currentThread().getId()).getBranches_taken());
         }
       }
@@ -97,7 +105,10 @@ public class WebServer {
             //System.out.println("Estimated BB for Run: " + metricsThread.getEstimatedRunBBL());
             //System.out.println("Estimated BB for Observe: " + metricsThread.getEstimatedObserveBBL());
             System.out.println("Branches taken: " + metricsThread.getBranches_taken());
-
+	    System.out.println("x0: " + metricsThread.getX0());
+		System.out.println("y0: " + metricsThread.getY0());
+		System.out.println("x1: " + metricsThread.getX1());
+		System.out.println("y1: " + metricsThread.getY1());
 
       }
 
@@ -110,11 +121,16 @@ public class WebServer {
         static byte[] SolveMaze(String args){
         try{
             HashMap<String,String> final_args = GetQueryValues(args);
-            System.out.println("Solving maze...");
+            System.out.println("Solving maze..." + args);
             String path = CURRENT_PATH + "/" + final_args.get("filename");
             thread_requests.get(Thread.currentThread().getId()).setUUID(final_args.get("filename").substring(final_args.get("filename").lastIndexOf("/")+1));
             thread_requests.get(Thread.currentThread().getId()).setVelocity(Integer.parseInt(final_args.get("v")));
             thread_requests.get(Thread.currentThread().getId()).setMazeType(final_args.get("m"));
+            thread_requests.get(Thread.currentThread().getId()).setX0(Integer.parseInt(final_args.get("x0")));
+            thread_requests.get(Thread.currentThread().getId()).setX1(Integer.parseInt(final_args.get("x1")));
+            thread_requests.get(Thread.currentThread().getId()).setY0(Integer.parseInt(final_args.get("y0")));
+            thread_requests.get(Thread.currentThread().getId()).setY1(Integer.parseInt(final_args.get("y1")));
+
             IncrementRequests();
             Main.main(buildParameterArray(final_args));
             return Files.readAllBytes(Paths.get(path));
