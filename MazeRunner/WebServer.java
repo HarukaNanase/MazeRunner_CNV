@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.InetSocketAddress;
 
+import Heuristics.RequestHeuristic;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -12,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
+import com.google.gson.Gson;
 public class WebServer {
 
     private static String CURRENT_PATH;
@@ -23,10 +24,13 @@ public class WebServer {
     public static void main(String[] args) throws Exception {
         Path currentRelativePath = Paths.get("");
         CURRENT_PATH = currentRelativePath.toAbsolutePath().toString();
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
         server.createContext("/mzrun.html", new MazeHandler());
         server.createContext("/alive", new AliveHandler());
+        server.createContext("/jobstate", new JobIdHandler());
         server.createContext("/mazecount", new MazeCounterHandler());
+        server.createContext("/currentworkload", new WorkloadHandler());
+        
         server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool()); // creates a default executor
         DynamoController.init();
         mapper = new DynamoDBMapper(DynamoController.dynamoDB);
@@ -56,6 +60,21 @@ public class WebServer {
         }
     }
 
+    static class WorkloadHandler implements HttpHandler{
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            int absoluteWorkload = 0;
+            for (Map.Entry<Long, MetricsData> entry : thread_requests.entrySet()) {
+                absoluteWorkload += entry.getValue().getWorkload(new RequestHeuristic());
+            }
+
+            t.sendResponseHeaders(200, (""+absoluteWorkload).getBytes().length);
+            OutputStream os = t.getResponseBody();
+            os.write((""+absoluteWorkload).getBytes());
+            os.close();
+        }
+    }
+
     static class MazeHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException{
@@ -66,9 +85,10 @@ public class WebServer {
                 OutputStream os = t.getResponseBody();
                 os.write(response);
                 os.close();
-		if(response.length > 50)
+		        if(response.length > 50)
                 	SaveMetrics();
                 DecrementRequests();
+                thread_requests.remove(Thread.currentThread().getId());
             }catch(Exception io){
                 t.sendResponseHeaders(200, io.getMessage().getBytes().length);
                 OutputStream os = t.getResponseBody();
@@ -76,6 +96,35 @@ public class WebServer {
                 os.close();
             }
             //System.out.println("Total branches taken: " + thread_requests.get(Thread.currentThread().getId()).getBranches_taken());
+        }
+      }
+      static class JobIdHandler implements HttpHandler {
+        @Override
+          public void handle(HttpExchange t) throws IOException{
+            String query = t.getRequestURI().getQuery();
+            System.out.println("Query: " + query);
+            String job_id = query.substring(query.lastIndexOf("&")+1);
+            int id = Integer.parseInt(job_id.split("=")[1]);
+            System.out.println("Fetching data for jobid " + id);
+            MetricsData current = null;
+
+            for(Map.Entry<Long, MetricsData> entry : thread_requests.entrySet()){
+                if(entry.getValue().getJobId() == id)
+                    current = entry.getValue();
+            }
+            if(current == null){
+                t.sendResponseHeaders(200, "Failed to fetch jobid".getBytes().length);
+                OutputStream os = t.getResponseBody();
+                os.write("Failed to fetch jobid".getBytes());
+                os.close();
+                return;
+            }
+            Gson gson = new Gson();
+            String data = gson.toJson(current);
+            t.sendResponseHeaders(200, data.getBytes().length);
+            OutputStream os = t.getResponseBody();
+            os.write(data.getBytes());
+            os.close();
         }
       }
 
@@ -130,7 +179,10 @@ public class WebServer {
             thread_requests.get(Thread.currentThread().getId()).setX1(Integer.parseInt(final_args.get("x1")));
             thread_requests.get(Thread.currentThread().getId()).setY0(Integer.parseInt(final_args.get("y0")));
             thread_requests.get(Thread.currentThread().getId()).setY1(Integer.parseInt(final_args.get("y1")));
-
+            thread_requests.get(Thread.currentThread().getId()).setJobId(Integer.parseInt(final_args.get("jobid")));
+            thread_requests.get(Thread.currentThread().getId()).setStrategy(final_args.get("s"));
+            thread_requests.get(Thread.currentThread().getId()).setExpectedBranches(Long.parseLong(final_args.get("expectedBranches")));
+            thread_requests.get(Thread.currentThread().getId()).setExpectedWorkload(Double.parseDouble(final_args.get("expectedWorkload")));
             IncrementRequests();
             Main.main(buildParameterArray(final_args));
             return Files.readAllBytes(Paths.get(path));

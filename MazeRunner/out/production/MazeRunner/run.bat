@@ -2,8 +2,9 @@
 title MazeRunner On the CLOUD 2018
 javac -cp ..\..\..\src/ ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Main.java -d .
 javac -cp aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* ..\..\..\DynamoController.java -d .
+javac ../../../Heuristics/* -d .
 javac -cp BIT/;;..\..\..\src\;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\ ..\..\..\TestMetrics.java -d .
-javac -cp BIT/;;..\..\..\src\;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\ ..\..\..\MetricsData.java -d .
+javac -cp BIT/;;..\..\..\src\;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\;../../../Heuristics/ ..\..\..\MetricsData.java -d .
 
 
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze.java -d .
@@ -14,7 +15,7 @@ javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunne
 javac -cp BIT/;..\..\..\src\; ..\..\..\src\pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\RobotController.java -d .
 javac -cp ..\..\..\.;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* ..\..\..\MetricsData.java -d .
 
-javac -cp javac -cp ..\..\..\;..\..\..\src\;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* ..\..\..\WebServer.java -d .
+javac -cp javac -cp ..\..\..\;..\..\..\src\;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\*;../../../com/google/gson/gson-2.6.2.jar ..\..\..\WebServer.java -d .
 
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Main output/
 java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\* TestMetrics pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\strategies\AStarStrategy output/
@@ -44,4 +45,4 @@ copy /y .\output\Maze.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Maze.cla
 
 del pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Main.class
 copy /y .\output\Main.class pt\ulisboa\tecnico\meic\cnv\mazerunner\maze\Main.class
-java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\*;pt\*; WebServer
+java -cp .;BIT/;aws-java-sdk\lib\aws-java-sdk-1.11.313.jar;aws-java-sdk\third-party\lib\*;pt\*;../../../com/google/gson/gson-2.6.2.jar WebServer

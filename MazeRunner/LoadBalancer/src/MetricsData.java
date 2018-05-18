@@ -1,4 +1,7 @@
+import Heuristics.IHeuristic;
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
+
+import java.util.Objects;
 
 
 @DynamoDBTable(tableName="metrics")
@@ -22,8 +25,10 @@ public class MetricsData {
     private int x1 = 0;
     private int y0 = 0;
     private int y1 = 0;
-
-
+    private String strategy = null;
+    private int jobId = 0;
+    private double expectedWorkload = 0;
+    private long expectedBranches = 0;
     public MetricsData(){
 
     }
@@ -209,7 +214,6 @@ public class MetricsData {
         //to avoid overhead.
         return (first_parcel + second_parcel + third_parcel + fourth_parcel) * this.getLoopObserves();
 
-
     }
 
     @DynamoDBIgnore
@@ -258,6 +262,67 @@ public class MetricsData {
 
     public void setY1(int y1) {
         this.y1 = y1;
+    }
+
+    @DynamoDBIgnore
+    public int getCalculatedWorkload(){
+        //TO DO: Implement this method to calculate a workload for a group of metrics based on their parameters;
+        return 0;
+    }
+
+    @DynamoDBAttribute(attributeName="strategy")
+    public String getStrategy(){
+        return this.strategy;
+    }
+
+    public void setStrategy(String strat){
+        this.strategy = strat;
+    }
+
+    @DynamoDBAttribute(attributeName="workload")
+    public double getWorkload(IHeuristic heuristic){
+        return heuristic.getWorkload(this.branches_taken, this.basicBlocksFound);
+    }
+
+    @DynamoDBIgnore
+    public int getJobId(){
+        return this.jobId;
+    }
+
+    public void setJobId(int id){
+        this.jobId = id;
+    }
+
+    @DynamoDBAttribute(attributeName="expectedWorkload")
+    public double getExpectedWorkload(){
+        return this.expectedWorkload;
+    }
+
+    public void setExpectedWorkload(double work){
+        this.expectedWorkload = work;
+    }
+
+    @DynamoDBIgnore
+    public long getExpectedBranches(){
+        return this.expectedBranches;
+    }
+
+    public void setExpectedBranches(long b){
+        this.expectedBranches = b;
+    }
+
+
+    @Override
+    public boolean equals(Object t){
+        if(t instanceof MetricsData){
+            MetricsData target = (MetricsData) t;
+            if(this.getStrategy().equals(target.getStrategy()) && this.getMazeType().equals(target.getMazeType())
+                    && this.getX0() == target.getX0() && this.getX1() == target.getX1() && this.getY0() == target.getY0()
+                    && this.getY1() == target.getY1())
+                return true;
+        }
+
+        return false;
     }
 
 }

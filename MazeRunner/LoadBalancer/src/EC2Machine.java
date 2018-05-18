@@ -24,28 +24,28 @@ import java.util.*;
 
 public class EC2Machine {
 
-    private String REGION = "us-east-1";
-    private String IMAGE_ID = "ami-0f63b8b3b5e15eec1";
-    private String INSTANCE_TYPE = "t2.micro";
+
+    private String REQUESTCOUNT_ENDPOINT = "/mazecount";
+    private String SOLVER_ENDPOINT = "/mzrun.html";
+    private String ALIVE_ENDPOINT = "/alive";
+    private String PROTOCOL = "http://";
     private int MIN_COUNT = 1;
     private int MAX_COUNT = 1;
-    private String KEY_NAME = "CNV_AWS";
-    private String SECURITY_GROUP = "CNV-HTTP-SSH";
     private Set<Instance> instances;
     public AmazonEC2 ec2;
     private AmazonCloudWatch cloudWatch;
     private String publicDNS = null;
     private String instanceId = null;
-    private String REQUESTCOUNT_ENDPOINT = "/mazecount";
-    private String SOLVER_ENDPOINT = "/mzrun.html";
-    private String ALIVE_ENDPOINT = "/alive";
-    private String PROTOCOL = "http://";
     private AWSCredentials credentials = null;
+    private boolean terminateFlag = false;
+    private int timeSinceLastFlag = 0;
+    private ArrayList<Integer> jobs;
     public EC2Machine() {
         instances = new HashSet<Instance>();
+        jobs = new ArrayList<Integer>();
     }
 
-    private void init() throws Exception {
+    private void init(String REGION) throws Exception {
         try {
             if(credentials == null)
                 credentials = new ProfileCredentialsProvider().getCredentials();
@@ -70,16 +70,16 @@ public class EC2Machine {
         return this.instanceId;
     }
 
-    public void launchMachine() throws Exception{
-        this.init();
+    public void launchMachine(String AMI, String InstanceType, String KeyName,String SecurityGroup, String Region) throws Exception{
+        this.init(Region);
         RunInstancesRequest runInstancesRequest =
                 new RunInstancesRequest();
-        runInstancesRequest.withImageId(IMAGE_ID)
-                .withInstanceType(INSTANCE_TYPE)
-                .withMinCount(1)
-                .withMaxCount(1)
-                .withKeyName(KEY_NAME)
-                .withSecurityGroups(SECURITY_GROUP);
+        runInstancesRequest.withImageId(AMI)
+                .withInstanceType(InstanceType)
+                .withMinCount(MIN_COUNT)
+                .withMaxCount(MAX_COUNT)
+                .withKeyName(KeyName)
+                .withSecurityGroups(SecurityGroup);
 
         RunInstancesResult runInstancesResult =
                 ec2.runInstances(runInstancesRequest);
@@ -114,7 +114,7 @@ public class EC2Machine {
         HttpURLConnection conn = null;
         try {
             //Create connection
-            URL url = new URL("http://" + this.publicDNS + ALIVE_ENDPOINT);
+            URL url = new URL(PROTOCOL + this.publicDNS + ALIVE_ENDPOINT);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -153,60 +153,12 @@ public class EC2Machine {
     }
 
     public int getServerRequestCount() {
-        HttpURLConnection conn = null;
-        try {
-            //Create connection
-            URL url = new URL("http://"+this.publicDNS + REQUESTCOUNT_ENDPOINT);
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String counterValue = rd.readLine();
-            System.out.println("Counter @ " + this.publicDNS + REQUESTCOUNT_ENDPOINT + ": " + counterValue);
-            return Integer.parseInt(counterValue);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
-    }
-
-    public int getServerWorkload(){
-        return -1;
+       String count = HTTPRequest.GETRequestAsString(PROTOCOL +this.publicDNS + REQUESTCOUNT_ENDPOINT);
+       return count != null ? Integer.parseInt(count) : -1;
     }
 
     public byte[] getMazeSolution(String request){
-        String endpoint = this.publicDNS + SOLVER_ENDPOINT + "?"+request;
-        HttpURLConnection conn = null;
-        DataInputStream rd = null;
-        try{
-            URL url = new URL("http://" + endpoint);
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            System.out.println("Content-Length: " + conn.getContentLength());
-            byte[] response = new byte[conn.getContentLength()];
-            rd = (new DataInputStream(conn.getInputStream()));
-            int len = 0;
-            while(len < response.length)
-                len += rd.read(response, len, response.length - len);
-            System.out.println("Got: "+len+" bytes.");
-            return response;
-
-        }catch(Exception e){
-            e.printStackTrace();
-            return null;
-        }finally{
-            if(conn != null)
-                conn.disconnect();
-            if(rd != null)
-                try{
-                    rd.close();}
-                catch(IOException ie){
-                    //
-                }
-        }
+        return HTTPRequest.GETRequest(PROTOCOL + this.publicDNS + SOLVER_ENDPOINT + "?" + request);
     }
 
 
@@ -218,6 +170,7 @@ public class EC2Machine {
     public boolean terminateMachine(){
         //int requestCount = getServerRequestCount();
         int requestCount = getServerRequestCount();
+        System.out.println("Trying to shut down machine. RequestCount: " + requestCount);
         if(requestCount == 0) {
             TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
             termInstanceReq.withInstanceIds(instanceId);
@@ -261,6 +214,29 @@ public class EC2Machine {
             }
             System.out.println("Instance State : " + state +".");
         }
+    }
+
+
+    public boolean getTerminateFlag(){
+        return this.terminateFlag;
+    }
+
+    public void setTerminateFlag(boolean flag){
+        this.terminateFlag = flag;
+        if(!flag)
+            this.timeSinceLastFlag = 0;
+    }
+
+    public int getTimeSinceLastFlag(){
+        return this.timeSinceLastFlag;
+    }
+
+    public void setTimeSinceLastFlag(int time){
+        this.timeSinceLastFlag = time;
+    }
+
+    public ArrayList<Integer> getJobs(){
+        return this.jobs;
     }
 
 }
