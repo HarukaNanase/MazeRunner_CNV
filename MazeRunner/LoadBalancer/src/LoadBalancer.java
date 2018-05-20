@@ -20,12 +20,13 @@ public class LoadBalancer {
     private static int MAXIMUM_HEAVYNESS = 85;
     private static int currentJobId = 0;
     private static String REGION = "us-east-1";
-    private static String IMAGE_ID = "ami-092e2e3869c41af60";
+    private static String IMAGE_ID = "ami-065bbcea27d201037";
     private static String INSTANCE_TYPE = "t2.micro";
     private static String KEY_NAME = "CNV_AWS";
     private static String SECURITY_GROUP = "CNV-HTTP-SSH";
     private static int WORKLOAD_THRESHOLD = 90;
     private static ArrayList<String> queries = new ArrayList<String>();
+   // private static HashMap<Pair<String, String>, > cache;
     public static void main(String[] args) throws Exception{
         scaler = new EC2AutoScaler();
         TimerTask scalerTask = new TimerTask() {
@@ -52,7 +53,7 @@ public class LoadBalancer {
     static class RequestCountHandler implements HttpHandler{
         @Override
         public void handle(HttpExchange t) throws IOException{
-            EC2Machine ec2 = scaler.getBestMachine();
+            EC2Machine ec2 = scaler.getBestMachine(0);
             int requestCount = ec2.getServerRequestCount();
             t.sendResponseHeaders(200, ("RequestCount: " + requestCount).getBytes().length);
             OutputStream os = t.getResponseBody();
@@ -80,8 +81,10 @@ public class LoadBalancer {
         public void handle(HttpExchange t) throws IOException{
             String similar = getSimilarWorkloadValue(t.getRequestURI().getQuery());
             System.out.println("Similar: " + similar);
-            EC2Machine bestMachine = getBestMachine();
             String query = t.getRequestURI().getQuery()+similar+"&jobid="+(++currentJobId);
+            Map<String, String> values = GetQueryValues(query);
+            int workload = Integer.parseInt(values.get("expectedWorkload"));
+            EC2Machine bestMachine = scaler.getBestMachine(workload);
             if(bestMachine != null){
                 System.out.println("Dispatching request to: " + bestMachine.getPublicDNS());
                 byte[] solvedMaze = bestMachine.getMazeSolution(query);
@@ -168,25 +171,8 @@ public class LoadBalancer {
         return mapper.query(MetricsData.class, query_map);
     }
 
-    public synchronized static EC2Machine getBestMachine(){
-        //TODO: ADD REMAINING HEURISTIC LOGIC
-        EC2Machine best = null;
-        int minimumHeavyness = -1;
-        int currentHeavyness = -1;
-        //TO DO: Change getServerRequestCount to getServerWorkload
-        for(Map.Entry<String, EC2Machine> entry : scaler.getMachines().entrySet()){
-            EC2Machine ec2 = entry.getValue();
-            if(best == null || (currentHeavyness = ec2.getServerRequestCount()) < minimumHeavyness){
-                best = ec2;
-                minimumHeavyness = currentHeavyness;
-            }
-        }
-        EC2Machine newBest = null;
-        //check if best workload is not over the threshold. If it is, launch a new machine.
-        if(minimumHeavyness > WORKLOAD_THRESHOLD){
-            newBest = scaler.createNewMachine(IMAGE_ID, INSTANCE_TYPE, KEY_NAME, SECURITY_GROUP, REGION);
-        }
-        return newBest == null ? best : newBest;
+    public static EC2Machine getBestMachine(int workload){
+        return scaler.getBestMachine(workload);
     }
 
     public synchronized MetricsData getCurrentStateByJobId(EC2Machine ec2, int jobid){
@@ -230,7 +216,7 @@ public class LoadBalancer {
         for(MetricsData metrics : dynamo_values){
             if(metrics.equals(thisRequest)) {
                 System.out.println("Heuristic Value for equal request: " + metrics.getWorkload(new RequestHeuristic()));
-                return "&expectedWorkload="+metrics.getWorkload(new RequestHeuristic())+"&expectedBranches="+metrics.getBranches_taken();
+                return "&expectedWorkload="+Math.round(metrics.getWorkload(new RequestHeuristic()))+"&expectedBranches="+metrics.getBranches_taken();
             }
             median_workload+=metrics.getWorkload(new RequestHeuristic());
             branches_taken+=metrics.getBranches_taken();
@@ -242,7 +228,7 @@ public class LoadBalancer {
             branches_taken /= dynamo_values.size();
         }
         System.out.println("Median workload for this request: " + median_workload);
-        return "&expectedWorkload=" + median_workload + "&expectedBranches="+branches_taken;
+        return "&expectedWorkload=" + Math.round(median_workload) + "&expectedBranches="+branches_taken;
 
 
     }

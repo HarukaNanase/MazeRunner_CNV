@@ -12,6 +12,8 @@ import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.Datapoint;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 import java.io.BufferedReader;
@@ -22,12 +24,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 
+import static java.lang.Math.round;
+
 public class EC2Machine {
 
 
     private String REQUESTCOUNT_ENDPOINT = "/mazecount";
     private String SOLVER_ENDPOINT = "/mzrun.html";
     private String ALIVE_ENDPOINT = "/alive";
+    private String JOBS_ENDPOINT = "/getjobs";
     private String PROTOCOL = "http://";
     private int MIN_COUNT = 1;
     private int MAX_COUNT = 1;
@@ -39,10 +44,17 @@ public class EC2Machine {
     private AWSCredentials credentials = null;
     private boolean terminateFlag = false;
     private int timeSinceLastFlag = 0;
+    private int timeIdle = 0;
     private ArrayList<Integer> jobs;
+    private TimerTask idletimer;
+    private Timer time;
+    private int IdleCheckTime = 5;
+    private int failedProofsOfLife = 0;
     public EC2Machine() {
         instances = new HashSet<Instance>();
         jobs = new ArrayList<Integer>();
+        time = new Timer();
+        idletimer = new IdleTask(this, IdleCheckTime*1000);
     }
 
     private void init(String REGION) throws Exception {
@@ -96,6 +108,7 @@ public class EC2Machine {
         this.publicDNS = getInstancePublicDNS();
         while(!getInstanceReadyStatus(instanceId))
             Thread.sleep(5000);
+        time.schedule(idletimer,0, IdleCheckTime*1000);
         System.out.println(publicDNS);
     }
 
@@ -158,24 +171,92 @@ public class EC2Machine {
     }
 
     public byte[] getMazeSolution(String request){
-        return HTTPRequest.GETRequest(PROTOCOL + this.publicDNS + SOLVER_ENDPOINT + "?" + request);
+        this.timeIdle = 0;
+        //return HTTPRequest.GETRequest(PROTOCOL + this.publicDNS + SOLVER_ENDPOINT + "?" + request);
+        String endpoint = this.publicDNS + SOLVER_ENDPOINT + "?"+request;
+        HttpURLConnection conn = null;
+        DataInputStream rd = null;
+        try{
+            URL url = new URL(PROTOCOL + endpoint);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            System.out.println("Content-Length: " + conn.getContentLength());
+            byte[] response = new byte[conn.getContentLength()];
+            rd = (new DataInputStream(conn.getInputStream()));
+            int len = 0;
+            while(len < response.length) {
+                len += rd.read(response, len, response.length - len);
+                System.out.println("Read a parcel. Len: " + len);
+            }
+            System.out.println("Got: "+len+" bytes.");
+            return response;
+
+        }catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }finally{
+            if(conn != null)
+                conn.disconnect();
+            if(rd != null)
+                try{
+                    rd.close();}
+                catch(IOException ie){
+                    ie.printStackTrace();
+                }
+        }
     }
 
 
-    public int getMachineWorkLoad(){
-        //TO DO: Implement calculations for the machine workload.
+    public int getAbsoluteWorkload(){
+        String data = HTTPRequest.GETRequestAsString(PROTOCOL + this.publicDNS + JOBS_ENDPOINT);
+        int absoluteWorkload = 0;
+        Gson gson = new Gson();
+        ArrayList<MetricsData> metrics = gson.fromJson(data, new TypeToken<ArrayList<MetricsData>>(){}.getType());
+        if(metrics != null) {
+            for (MetricsData m : metrics) {
+                absoluteWorkload += m.getExpectedWorkload();
+            }
+            return round(absoluteWorkload);
+        }
         return 0;
+    }
+
+    public boolean getProofOfLife(){
+        String alive = HTTPRequest.GETRequestAsString(PROTOCOL + this.publicDNS + ALIVE_ENDPOINT);
+        if(alive != null)
+            this.failedProofsOfLife = 0;
+
+        return alive != null;
+    }
+
+
+    public int getWorkloadLeft(){
+        String data = HTTPRequest.GETRequestAsString(PROTOCOL + this.publicDNS + JOBS_ENDPOINT);
+        int branchesDone = 0;
+        int expectedBranches = 0;
+        Gson gson = new Gson();
+        ArrayList<MetricsData> metrics = gson.fromJson(data, new TypeToken<ArrayList<MetricsData>>(){}.getType());
+        for(MetricsData m : metrics){
+            branchesDone += m.getBranches_taken();
+            expectedBranches += m.getExpectedBranches();
+        }
+        return expectedBranches - branchesDone;
     }
 
     public boolean terminateMachine(){
         //int requestCount = getServerRequestCount();
         int requestCount = getServerRequestCount();
-        System.out.println("Trying to shut down machine. RequestCount: " + requestCount);
-        if(requestCount == 0) {
+        //System.out.println("Trying to shut down machine. RequestCount: " + requestCount);
+        if(requestCount == 0 || requestCount == -1) {
             TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
             termInstanceReq.withInstanceIds(instanceId);
             ec2.terminateInstances(termInstanceReq);
             System.out.println("Killing machine: " + this.publicDNS);
+            this.idletimer.cancel();
+            this.time.cancel();
+            this.time.purge();
+            this.time = null;
+            this.idletimer = null;
             return true;
         }
         return false;
@@ -237,6 +318,41 @@ public class EC2Machine {
 
     public ArrayList<Integer> getJobs(){
         return this.jobs;
+    }
+
+    public int getIdleTime(){
+        return this.timeIdle;
+    }
+
+    public void setIdleTime(int time){
+        this.timeIdle = time;
+    }
+
+    public void addIdleTime(int add){
+        this.timeIdle += add;
+    }
+
+    public int getFailedProofsOfLife(){
+        return this.failedProofsOfLife;
+    }
+    public void setFailedProofsOfLife(int p){
+        this.failedProofsOfLife = p;
+    }
+    public void incrementFailedProofsOfLife(){
+        this.failedProofsOfLife++;
+    }
+
+    class IdleTask extends TimerTask{
+        EC2Machine ec2;
+        int speed;
+        public IdleTask(EC2Machine m, int s){this.ec2 = m; speed=s;}
+        public void run(){
+            //System.out.println("Machine Timer Task for machine: " + ec2);
+            if(ec2.getServerRequestCount() == 0)
+                ec2.addIdleTime(speed);
+            else
+                ec2.setIdleTime(0);
+        }
     }
 
 }
