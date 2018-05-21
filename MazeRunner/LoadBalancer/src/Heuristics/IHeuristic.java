@@ -1,5 +1,5 @@
 package Heuristics;
 
 public interface IHeuristic {
-    public double getWorkload(long branches, long bbls);
+    public double getWorkload(long bbls);
 }

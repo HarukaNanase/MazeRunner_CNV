@@ -25,7 +25,7 @@ public class HTTPRequest {
             rd = (new DataInputStream(conn.getInputStream()));
             int len = 0;
             while(len < response.length)
-                len += rd.read(response, len, response.length - len);
+                    len += rd.read(response, len, response.length - len);
             System.out.println("Got: "+len+" bytes.");
             return response;
 

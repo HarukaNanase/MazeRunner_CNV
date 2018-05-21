@@ -9,7 +9,7 @@ public class EC2AutoScaler {
     private int maximumMachines = 20;
     private int MAXIMUM_HEAVYNESS = 85;
     private String REGION = "us-east-1";
-    private String IMAGE_ID = "ami-065bbcea27d201037";
+    private String IMAGE_ID = "ami-067f4fc6a3d7c79f6";
     private String INSTANCE_TYPE = "t2.micro";
     private String KEY_NAME = "CNV_AWS";
     private String SECURITY_GROUP = "CNV-HTTP-SSH";
@@ -87,7 +87,7 @@ public class EC2AutoScaler {
                 timer.schedule(t, 0);
             }
         }
-        if(workload >= WORKLOAD_COEFFICIENT * WORKLOAD_THRESHOLD){
+        if(workload >= 18){
             //since request is so big, we can allocate a machine for it and wait a lil for it to boot.
             best = this.createNewMachine(this.IMAGE_ID, INSTANCE_TYPE, KEY_NAME, SECURITY_GROUP, REGION);
         }
@@ -192,12 +192,14 @@ public class EC2AutoScaler {
         }
         System.out.println("Least Workload: " + leastWorkload);
         //TODO: Fix bug where a new machine is still launched even though one just came up online.
-        if(leastWorkload >= WORKLOAD_COEFFICIENT*WORKLOAD_THRESHOLD && this.getFutureMachineCount() <= this.machines.size()){
-            this.setMachinesGoingOnline(this.getMachinesGoingOnline()+1);
-            System.out.println("System is overloaded. Booting a new machine up preemptively");
-            TimerTask t = new CreateNewMachinePreemptivelyTask(this);
-            Timer timer = new Timer(true);
-            timer.schedule(t, 0);
+        synchronized(this) {
+            if (leastWorkload >= WORKLOAD_COEFFICIENT * WORKLOAD_THRESHOLD && this.getFutureMachineCount() <= this.machines.size()) {
+                this.setMachinesGoingOnline(this.getMachinesGoingOnline() + 1);
+                System.out.println("System is overloaded. Booting a new machine up preemptively");
+                TimerTask t = new CreateNewMachinePreemptivelyTask(this);
+                Timer timer = new Timer(true);
+                timer.schedule(t, 0);
+            }
         }
 
         //System.out.println("FutureMachineCount: " + this.getFutureMachineCount());

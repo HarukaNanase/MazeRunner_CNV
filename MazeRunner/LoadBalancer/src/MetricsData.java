@@ -1,8 +1,6 @@
 import Heuristics.IHeuristic;
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
 
-import java.util.Objects;
-
 
 @DynamoDBTable(tableName="metrics")
 public class MetricsData {
@@ -81,6 +79,11 @@ public class MetricsData {
         return basicBlocksFound;
     }
 
+    @DynamoDBAttribute(attributeName="Total_BB")
+    public long getTotalBasicBlocksFound() {
+        return basicBlocksFound + runBB +  observeBB;
+    }
+
     public void setBasicBlocksFound(long basicBlocksFound) {
         this.basicBlocksFound = basicBlocksFound;
     }
@@ -140,7 +143,7 @@ public class MetricsData {
         return (float) this.getBasicBlocksFound() / this.getLoopRuns();
     }
 
-    @DynamoDBIgnore
+    @DynamoDBAttribute(attributeName="ObserveBB")
     public long getObserveBB() {
         return observeBB;
     }
@@ -158,7 +161,7 @@ public class MetricsData {
         this.percetangeObserve = percetangeObserve;
     }
 
-    @DynamoDBIgnore
+    @DynamoDBAttribute(attributeName="RunBB")
     public long getRunBB() {
         return runBB;
     }
@@ -281,7 +284,7 @@ public class MetricsData {
 
     @DynamoDBAttribute(attributeName="workload")
     public double getWorkload(IHeuristic heuristic){
-        return heuristic.getWorkload(this.branches_taken, this.basicBlocksFound);
+        return heuristic.getWorkload(this.getTotalBasicBlocksFound());
     }
 
     @DynamoDBIgnore
@@ -311,6 +314,10 @@ public class MetricsData {
         this.expectedBranches = b;
     }
 
+    @DynamoDBIgnore
+    public long getExpectedBBL(){ return this.expectedBranches;}
+
+    public void setExpectedBBL(long b) { this.expectedBranches = b;}
 
     @Override
     public boolean equals(Object t){

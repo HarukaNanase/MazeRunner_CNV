@@ -221,6 +221,22 @@ public class EC2Machine {
         return 0;
     }
 
+    public int getCurrentWorkload(){
+        String data = HTTPRequest.GETRequestAsString(PROTOCOL + this.publicDNS + JOBS_ENDPOINT);
+        int currentWorkload = 0;
+        int totalExpectedWorkload = 0;
+        Gson gson = new Gson();
+        ArrayList<MetricsData> metrics = gson.fromJson(data, new TypeToken<ArrayList<MetricsData>>(){}.getType());
+        if(metrics != null){
+            for(MetricsData m : metrics){
+                currentWorkload += m.getTotalBasicBlocksFound();
+                totalExpectedWorkload += m.getExpectedBranches();
+            }
+        }
+
+        return currentWorkload / totalExpectedWorkload;
+    }
+
     public boolean getProofOfLife(){
         String alive = HTTPRequest.GETRequestAsString(PROTOCOL + this.publicDNS + ALIVE_ENDPOINT);
         if(alive != null)

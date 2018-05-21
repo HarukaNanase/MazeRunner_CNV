@@ -1,3 +1,5 @@
+import Heuristics.CubicHeuristic;
+import Heuristics.LogarithmicHeuristic;
 import Heuristics.RequestHeuristic;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
@@ -13,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LoadBalancer {
     private static EC2AutoScaler scaler = null;
@@ -24,10 +27,30 @@ public class LoadBalancer {
     private static String INSTANCE_TYPE = "t2.micro";
     private static String KEY_NAME = "CNV_AWS";
     private static String SECURITY_GROUP = "CNV-HTTP-SSH";
+    private static int MAX_CACHE_SIZE = 20;
     private static int WORKLOAD_THRESHOLD = 90;
     private static ArrayList<String> queries = new ArrayList<String>();
+    private static ConcurrentHashMap<Pair, ArrayList<MetricsData>> cache;
    // private static HashMap<Pair<String, String>, > cache;
     public static void main(String[] args) throws Exception{
+        cache = new ConcurrentHashMap<Pair, ArrayList<MetricsData>>();
+        cache.put(new Pair("Maze50.maze", "astar"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze50.maze", "dfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze50.maze", "bfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze100.maze", "astar"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze100.maze", "dfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze100.maze", "bfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze250.maze", "astar"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze250.maze", "dfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze250.maze", "bfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze500.maze", "astar"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze500.maze", "dfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze500.maze", "bfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze1000.maze", "astar"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze1000.maze", "dfs"), new ArrayList<MetricsData>());
+        cache.put(new Pair("Maze1000.maze", "bfs"), new ArrayList<MetricsData>());
+
+
         scaler = new EC2AutoScaler();
         TimerTask scalerTask = new TimerTask() {
             @Override
@@ -161,11 +184,15 @@ public class LoadBalancer {
         attributeValues.put(":x0_plus", new AttributeValue().withN(""+(x0+quadrant)));
         attributeValues.put(":y0_minus", new AttributeValue().withN(""+(y0-quadrant)));
         attributeValues.put(":y0_plus", new AttributeValue().withN(""+(y0+quadrant)));
+        attributeValues.put(":x1_minus", new AttributeValue().withN(""+(x1-quadrant)));
+        attributeValues.put(":x1_plus", new AttributeValue().withN(""+(x1+quadrant)));
+        attributeValues.put(":y1_minus", new AttributeValue().withN(""+(y1-quadrant)));
+        attributeValues.put(":y1_minus", new AttributeValue().withN(""+(y1-quadrant)));
         attributeValues.put(":strategy", new AttributeValue().withS(strategy));
         MetricsData ex = new MetricsData();
         ex.setMazeType(mazetype);
         DynamoDBQueryExpression<MetricsData> query_map = new DynamoDBQueryExpression<MetricsData>()
-            .withFilterExpression("x0 BETWEEN :x0_minus and :x0_plus AND y0 BETWEEN :y0_minus and :y0_plus AND strategy = :strategy")
+            .withFilterExpression("x0 BETWEEN :x0_minus and :x0_plus AND y0 BETWEEN :y0_minus and :y0_plus AND strategy = :strategy AND x1 BETWEEN :x1_minus and :x1_plus AND y1 BETWEEN :y1_minus and :y1_plus")
             .withExpressionAttributeValues(attributeValues);
         query_map.setHashKeyValues(ex);
         return mapper.query(MetricsData.class, query_map);
@@ -201,6 +228,7 @@ public class LoadBalancer {
         int y0 = Integer.parseInt(values.get("y0"));
         int x1 = Integer.parseInt(values.get("x1"));
         int y1 = Integer.parseInt(values.get("y1"));
+        int vel = Integer.parseInt(values.get("v"));
         String strategy = values.get("s");
         MetricsData thisRequest = new MetricsData();
         thisRequest.setMazeType(MazeType);
@@ -209,26 +237,49 @@ public class LoadBalancer {
         thisRequest.setX1(x1);
         thisRequest.setY1(y1);
         thisRequest.setStrategy(strategy);
-        List<MetricsData> dynamo_values = getSimilarMazes(MazeType,x0,y0,x1,y1,strategy);
 
-        double median_workload = 0;
-        long branches_taken = 0;
-        for(MetricsData metrics : dynamo_values){
-            if(metrics.equals(thisRequest)) {
-                System.out.println("Heuristic Value for equal request: " + metrics.getWorkload(new RequestHeuristic()));
-                return "&expectedWorkload="+Math.round(metrics.getWorkload(new RequestHeuristic()))+"&expectedBranches="+metrics.getBranches_taken();
+
+        //check cache before dynamo for an exact value
+        Pair thisPair = new Pair(MazeType, strategy);
+        for(MetricsData m : cache.get(thisPair)){
+            if(m.equals(thisRequest)){
+                return "&expectedWorkload="+Math.round(m.getWorkload(new CubicHeuristic()))+"&expectedBBL="+m.getTotalBasicBlocksFound();
             }
-            median_workload+=metrics.getWorkload(new RequestHeuristic());
-            branches_taken+=metrics.getBranches_taken();
+        }
+        List<MetricsData> dynamo_values = getSimilarMazes(MazeType,x0,y0,x1,y1,strategy);
+        double median_workload = 0;
+        long bbls = 0;
+        int median_velocity = 0;
+        for(MetricsData metrics : dynamo_values){
+            if(cache.get(thisPair).size() < MAX_CACHE_SIZE)
+                cache.get(thisPair).add(metrics);
+            else{
+                cache.get(thisPair).remove(0);
+                cache.get(thisPair).add(metrics);
+            }
+            if(metrics.equals(thisRequest)) {
+                System.out.println("Heuristic Value for equal request: " + metrics.getWorkload(new CubicHeuristic()));
+               // return "&expectedWorkload="+Math.round(metrics.getWorkload(new RequestHeuristic()))+"&expectedBranches="+metrics.getBranches_taken();
+                //return "&expectedWorkload="+Math.round(metrics.getWorkload(new LogarithmicHeuristic()))+"&expectedBranches="+metrics.getBranches_taken();
+                //return "&expectedWorkload="+Math.round(metrics.getWorkload(new LinearHeuristic()))+"&expectedBranches="+metrics.getBranches_taken();
+                return "&expectedWorkload="+Math.round(metrics.getWorkload(new CubicHeuristic()))+"&expectedBBL="+metrics.getTotalBasicBlocksFound();
 
+            }
+            //median_workload+=metrics.getWorkload(new RequestHeuristic());
+            //median_workload += metrics.getWorkload(new LogarithmicHeuristic());
+            median_workload += metrics.getWorkload(new CubicHeuristic());
+            //median_workload += metrics.getWorkload(new LinearHeuristic());
+            bbls+=metrics.getBasicBlocksFound() + metrics.getObserveBB() + (metrics.getRunBB()*(1-(vel - metrics.getVelocity())));
         }
         if(dynamo_values.size() > 0){
             System.out.println("Found Similar Mazes: " + dynamo_values.size() + " Mazes");
-            median_workload /= dynamo_values.size();
-            branches_taken /= dynamo_values.size();
+            //median_workload /= dynamo_values.size();
+            bbls /= dynamo_values.size();
         }
+
+        median_workload = new CubicHeuristic().getWorkload(bbls);
         System.out.println("Median workload for this request: " + median_workload);
-        return "&expectedWorkload=" + Math.round(median_workload) + "&expectedBranches="+branches_taken;
+        return "&expectedWorkload=" + Math.round(median_workload) + "&expectedBBL="+bbls;
 
 
     }
